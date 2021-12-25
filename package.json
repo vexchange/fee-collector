@@ -1,0 +1,14 @@
+{
+  "scripts": {
+    "lint": "npm run solhint && npm run mdlint",
+    "solhint": "solhint src/**/*.sol",
+    "mdlint": "markdownlint ."
+  },
+  "devDependencies": {
+    "markdownlint": "0.24.0",
+    "solhint": "3.3.6"
+  },
+  "dependencies": {
+    "markdownlint-cli": "0.30.0"
+  }
+}

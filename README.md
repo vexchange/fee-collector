@@ -1,11 +1,11 @@
-# Fee Claimer
+# Fee Collector
 
-The Vexchange fee claimer contract intends to automate the claim, conversion,
-and transfer of generated fees to the designated governance address. The problem
-it addresses is one of managing an ever-growing number of listed assets & pairs
-on Vexchange creating a large cognitive burden on Vexchange's governance. To
-address this, the default position of governance must be to sell all tokens back
-to a desired asset(s).
+The Vexchange fee collector contract intends to automate the collection,
+conversion, and transfer of generated fees to the designated governance address.
+The problem it addresses is one of managing an ever-growing number of listed
+assets & pairs on Vexchange creating a large cognitive burden on Vexchange's
+governance. To address this, the default position of governance must be to sell
+all tokens back to a desired asset(s).
 
 
 ## SushiSwap's SushiMakerKashi

@@ -9,7 +9,7 @@ import "@vexchange-contracts/vexchange-v2-core/contracts/interfaces/IVexchangeV2
 
 struct TokenConfig
 {
-    address SwapTo;         // if not set, will swap to mDesiredToken
+    IERC20  SwapTo;          // if not set, will swap to mDesiredToken
     bool    ShouldNotSell;  // flag to disable selling of desirable assets
 }
 
@@ -17,11 +17,11 @@ contract FeeCollector is Ownable
 {
     using SafeERC20 for IERC20;
 
-    IVexchangeV2Factory   mVexchangeFactory;
-    IERC20                mDesiredToken;
-    address               mRecipient;
+    IVexchangeV2Factory private  mVexchangeFactory;
+    IERC20              private  mDesiredToken;
+    address             private  mRecipient;
 
-    mapping(address => TokenConfig)  mConfig;
+    mapping(IERC20 => TokenConfig) private  mConfig;
 
     constructor(
         IVexchangeV2Factory aVexchangeFactory,
@@ -40,30 +40,32 @@ contract FeeCollector is Ownable
         uint256 lPlatformFee = aPair.platformFee();
         address lToken0 = aPair.token0();
 
-        uint256 lPlatformRake = lSwapFee * lPlatformFee;
-
         uint256 lTokenHoldings;
         if (lToken0 == aTokenToSell)
         {
+            // token to sell is token0 && reserve0
             (lTokenHoldings, ,) = aPair.getReserves();
         }
         else
         {
-            (lTokenHoldings, ,) = aPair.getReserves();
+            // token to sell is token1 && reserve1
+            (, lTokenHoldings,) = aPair.getReserves();
         }
+
+        uint256 lPlatformRake = lSwapFee * lPlatformFee;
 
         return lPlatformRake * lTokenHoldings / 1e8;  // swapFee * platformFee are scaled 1e4
     }
 
     function Min(uint256 a, uint256 b) private pure returns (uint256)
     {
-        return a > b ? a : b;
+        return a < b ? a : b;
     }
 
     function Swap(
         IVexchangeV2Pair aPair,
-        address aFromToken,
-        address aToToken,
+        IERC20 aFromToken,
+        IERC20 aToToken,
         uint256 aAmountIn,
         uint256 aSwapFee,
         address aTo
@@ -90,33 +92,19 @@ contract FeeCollector is Ownable
         }
     }
 
-    function SellHolding(address aToken) public
+    // ***** Admin Functions *****
+    function WithdrawToken(IERC20 aToken, address aRecipient) external onlyOwner
     {
-        require(aToken != address(mDesiredToken), "cannot sell mDesiredToken");
-
-        TokenConfig memory lConfig = mConfig[aToken];
-        require(lConfig.ShouldNotSell == false, "selling disabled for aToken");
-
-        address lTargetToken;
-        if (lConfig.SwapTo == address(0))
-        {
-            lTargetToken = address(mDesiredToken);
-        }
-        else
-        {
-            lTargetToken = lConfig.SwapTo;
-        }
-
-        // compute the sale
-        IVexchangeV2Pair lSwapPair = IVexchangeV2Pair(mVexchangeFactory.getPair(aToken, lTargetToken));  // can be optimized
-        uint256 lCurrentHolding = IERC20(aToken).balanceOf(address(this));
-        uint256 lMaxImpact = CalcMaxSaleImpact(lSwapPair, aToken);
-        uint256 lAmountToSell = Min(lCurrentHolding, lMaxImpact);
-
-        Swap(lSwapPair, aToken, lTargetToken, lAmountToSell, lSwapPair.swapFee(), mRecipient);
+        aToken.transfer(aRecipient, aToken.balanceOf(address(this)));
     }
 
-    function WithdrawLP(IVexchangeV2Pair aPair) public
+    function UpdateConfig(IERC20 aToken, TokenConfig calldata aConfig) external onlyOwner
+    {
+        mConfig[aToken] = aConfig;
+    }
+
+    // ***** Public Functions *****
+    function BreakApartLP(IVexchangeV2Pair aPair) external
     {
         // checks
         uint256 lOurHolding = aPair.balanceOf(address(this));
@@ -124,6 +112,37 @@ contract FeeCollector is Ownable
         // effects
         aPair.transfer(address(aPair), lOurHolding);
         aPair.burn(address(this));
+    }
+
+    function SellHolding(IERC20 aToken) external
+    {
+        require(aToken != mDesiredToken, "cannot sell mDesiredToken");
+
+        TokenConfig memory lConfig = mConfig[aToken];
+        require(lConfig.ShouldNotSell == false, "selling disabled for aToken");
+
+        IERC20 lTargetToken;
+        if (address(lConfig.SwapTo) == address(0))
+        {
+            lTargetToken = mDesiredToken;
+        }
+        else
+        {
+            lTargetToken = lConfig.SwapTo;
+        }
+
+        // compute the sale
+        IVexchangeV2Pair lSwapPair = IVexchangeV2Pair(mVexchangeFactory.getPair(address(aToken), address(lTargetToken)));  // can be optimized
+        uint256 lCurrentHolding = IERC20(aToken).balanceOf(address(this));
+        uint256 lMaxImpact = CalcMaxSaleImpact(lSwapPair, address(aToken));
+        uint256 lAmountToSell = Min(lCurrentHolding, lMaxImpact);
+
+        Swap(lSwapPair, aToken, lTargetToken, lAmountToSell, lSwapPair.swapFee(), mRecipient);
+    }
+
+    function SweepDesired() external
+    {
+        mDesiredToken.transfer(mRecipient, mDesiredToken.balanceOf(address(this)));
     }
 }
 

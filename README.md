@@ -27,20 +27,13 @@ only miners can guarantee safe front-running of the `SushiMakerKashi` contract.
 
 Vexchange will also use its own liquidity pools to execute asset sales (as opposed
 to an auction or some other mechanism). However, as an extension we will cap the
-max trade slippage to either:
-- The fee for the pair
-  - Only LPs can profit from front-running the fee sales
+max trade slippage to:
 - Vexchange's portion of the fee for the pair
   - No one can profit from front-running the fee sales
-  - If Vexchange's platform fee is `0` we will need a fallback tolerance
+  - If Vexchange's platform fee is `0` calls to `SellHolding` will fail
 
-In addition to this, we will also allow the caller to provide a swap path of up
-to 2 swaps. If the two swap path returns more than a direct swap to VET it will
-be accepted (will still be subject to slippage caps).
-
-Vexchange will also need to support:
-- Disabling sales for specified tokens
-- Disabling withdrawals for specified LP pairs
-- Specifying multiple desired tokens
+Vexchange will also support:
+- Disabling sales for specific tokens
+- Disabling withdrawals for specific LP pairs
 - Setting what token a pair will swap to (non set pairs will swap to default
   desired token)

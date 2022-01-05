@@ -5,6 +5,7 @@
     "mdlint": "markdownlint ."
   },
   "devDependencies": {
+    "ethers": "5.5.2",
     "markdownlint": "0.24.0",
     "solhint": "3.3.6"
   },

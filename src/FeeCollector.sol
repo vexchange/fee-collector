@@ -18,14 +18,14 @@ contract FeeCollector is Ownable
     using SafeERC20 for IERC20;
 
     IVexchangeV2Factory   mVexchangeFactory;
-    address               mDesiredToken;
+    IERC20                mDesiredToken;
     address               mRecipient;
 
     mapping(address => TokenConfig)  mConfig;
 
     constructor(
         IVexchangeV2Factory aVexchangeFactory,
-        address aDesiredToken,
+        IERC20 aDesiredToken,
         address aRecipient
     )
     {
@@ -92,7 +92,7 @@ contract FeeCollector is Ownable
 
     function SellHolding(address aToken) public
     {
-        require(aToken != mDesiredToken, "cannot sell mDesiredToken");
+        require(aToken != address(mDesiredToken), "cannot sell mDesiredToken");
 
         TokenConfig memory lConfig = mConfig[aToken];
         require(lConfig.ShouldNotSell == false, "selling disabled for aToken");
@@ -100,7 +100,7 @@ contract FeeCollector is Ownable
         address lTargetToken;
         if (lConfig.SwapTo == address(0))
         {
-            lTargetToken = mDesiredToken;
+            lTargetToken = address(mDesiredToken);
         }
         else
         {

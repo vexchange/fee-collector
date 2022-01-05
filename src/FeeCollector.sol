@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
+/* solhint-disable not-rely-on-time */
 pragma solidity =0.8.11;
 
 import "@openzeppelin/access/Ownable.sol";
@@ -9,8 +10,9 @@ import "@vexchange-contracts/vexchange-v2-core/contracts/interfaces/IVexchangeV2
 
 struct TokenConfig
 {
-    IERC20  SwapTo;          // if not set, will swap to mDesiredToken
-    bool    ShouldNotSell;  // flag to disable selling of desirable assets
+    bool    DisableSales;  // flag to disable selling of desirable assets
+    IERC20  SwapTo;        // if not set, will swap to mDesiredToken
+    uint256 LastSaleTime;  // used to throttle sale speed
 }
 
 contract FeeCollector is Ownable
@@ -78,7 +80,7 @@ contract FeeCollector is Ownable
         {
             uint256 lAmountOut = lAmountInWithFee * lReserve1 / (lReserve0 * 10_000 + lAmountInWithFee);
 
-            // effects
+            // external
             IERC20(aFromToken).safeTransfer(address(aPair), aAmountIn);
             aPair.swap(lAmountOut, 0, aTo, "");
         }
@@ -86,7 +88,7 @@ contract FeeCollector is Ownable
         {
             uint256 lAmountOut = lAmountInWithFee * lReserve0 / (lReserve1 * 10_000 + lAmountInWithFee);
 
-            // effects
+            // external
             IERC20(aFromToken).safeTransfer(address(aPair), aAmountIn);
             aPair.swap(0, lAmountOut, aTo, "");
         }
@@ -109,17 +111,18 @@ contract FeeCollector is Ownable
         // checks
         uint256 lOurHolding = aPair.balanceOf(address(this));
 
-        // effects
+        // external
         aPair.transfer(address(aPair), lOurHolding);
         aPair.burn(address(this));
     }
 
     function SellHolding(IERC20 aToken) external
     {
-        require(aToken != mDesiredToken, "cannot sell mDesiredToken");
+        require(aToken != mDesiredToken, "cannot sell desired token");
 
-        TokenConfig memory lConfig = mConfig[aToken];
-        require(lConfig.ShouldNotSell == false, "selling disabled for aToken");
+        TokenConfig storage lConfig = mConfig[aToken];
+        require(lConfig.DisableSales == false, "selling disabled for token");
+        require(lConfig.LastSaleTime + 8 hours < block.timestamp, "sale too soon");
 
         IERC20 lTargetToken;
         if (address(lConfig.SwapTo) == address(0))
@@ -137,6 +140,10 @@ contract FeeCollector is Ownable
         uint256 lMaxImpact = CalcMaxSaleImpact(lSwapPair, address(aToken));
         uint256 lAmountToSell = Min(lCurrentHolding, lMaxImpact);
 
+        // update state
+        lConfig.LastSaleTime = block.timestamp;
+
+        // external
         Swap(lSwapPair, aToken, lTargetToken, lAmountToSell, lSwapPair.swapFee(), mRecipient);
     }
 

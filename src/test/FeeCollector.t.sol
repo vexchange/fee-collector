@@ -9,6 +9,7 @@ import "@vexchange-contracts/vexchange-v2-core/contracts/interfaces/IVexchangeV2
 
 interface HEVM {
     function ffi(string[] calldata) external returns (bytes memory);
+    function warp(uint256 timestamp) external;
 }
 
 contract FeeCollectorTest is DSTest
@@ -85,6 +86,9 @@ contract FeeCollectorTest is DSTest
         ));
 
         mFeeCollector = new FeeCollector(mVexFactory, mDesiredToken, address(this));
+
+        // set timezone to 24 hours in the future to get passed 8 hour sale rate limit
+        hevm.warp(24 hours);
     }
 
     // ***** Tests *****
@@ -118,7 +122,10 @@ contract FeeCollectorTest is DSTest
         assertEq(mDesiredToken.balanceOf(address(this)),           0);
 
         // act
-        mFeeCollector.UpdateConfig(mExternalToken, TokenConfig({ SwapTo: IERC20(address(0)), ShouldNotSell: true }));
+        mFeeCollector.UpdateConfig(
+            mExternalToken,
+            TokenConfig({ DisableSales: true, SwapTo: IERC20(address(0)), LastSaleTime: 0 })
+        );
         mFeeCollector.SellHolding(mExternalToken);
     }
 
@@ -266,7 +273,10 @@ contract FeeCollectorTest is DSTest
 
         // act
         uint256 lMaxSale = calculateMaxSale(lOtherPair, lOtherToken);
-        mFeeCollector.UpdateConfig(lOtherToken, TokenConfig({ SwapTo: mExternalToken, ShouldNotSell: false }));
+        mFeeCollector.UpdateConfig(
+            lOtherToken,
+            TokenConfig({ DisableSales: false, SwapTo: mExternalToken, LastSaleTime: 0 })
+        );
         mFeeCollector.SellHolding(lOtherToken);
         mFeeCollector.SweepDesired();
 
@@ -276,5 +286,79 @@ contract FeeCollectorTest is DSTest
 
         assertEq(lOtherToken.balanceOf(address(mFeeCollector)), 2e18 - lMaxSale);  // we sold as much as we could
         assertEq(lCollectorBal, 100e18 - lOtherPairBal);  // we have all external outside of other pair
+    }
+
+    function testFail_swap_too_quickly() public
+    {
+        mExternalToken.Mint(address(mTestPair), 100e18);
+        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mTestPair.mint(address(1));
+
+        // sanity
+        mExternalToken.Mint(address(mTestPair), 100e18);
+        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mTestPair.mint(address(mFeeCollector));
+        mFeeCollector.BreakApartLP(mTestPair);
+        assertEq(mTestPair.balanceOf(address(mFeeCollector)),      0);
+        assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 100e18);
+        assertEq(mDesiredToken.balanceOf(address(mFeeCollector)),  50e18);
+        assertEq(mDesiredToken.balanceOf(address(this)),           0);
+
+        // act
+        mFeeCollector.SellHolding(mExternalToken);
+        mFeeCollector.SellHolding(mExternalToken);
+    }
+
+    function test_sell_two_different() public
+    {
+        MintableERC20 lOtherToken = new MintableERC20("Other Token", "OTHER");
+        IVexchangeV2Pair lOtherPair = IVexchangeV2Pair(mVexFactory.createPair(
+            address(mExternalToken),
+            address(lOtherToken)
+        ));
+
+        lOtherToken.Mint(address(lOtherPair), 2e18);  // this is a more expensive token
+        mExternalToken.Mint(address(lOtherPair), 50e18);
+        lOtherPair.mint(address(1));
+        mExternalToken.Mint(address(mTestPair), 100e18);
+        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mTestPair.mint(address(1));
+
+        // sanity
+        lOtherToken.Mint(address(lOtherPair), 2e18);
+        mExternalToken.Mint(address(lOtherPair), 50e18);
+        lOtherPair.mint(address(mFeeCollector));
+        mFeeCollector.BreakApartLP(lOtherPair);
+        assertEq(lOtherPair.balanceOf(address(mFeeCollector)),     0);
+        assertEq(lOtherToken.balanceOf(address(mFeeCollector)),    2e18);
+        assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 50e18);
+        mExternalToken.Mint(address(mTestPair), 100e18);
+        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mTestPair.mint(address(mFeeCollector));
+        mFeeCollector.BreakApartLP(mTestPair);
+        assertEq(mTestPair.balanceOf(address(mFeeCollector)),      0);
+        assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 150e18);
+        assertEq(mDesiredToken.balanceOf(address(mFeeCollector)),  50e18);
+        assertEq(mDesiredToken.balanceOf(address(this)),           0);
+
+        // act
+        mFeeCollector.UpdateConfig(
+            lOtherToken,
+            TokenConfig({ DisableSales: false, SwapTo: mExternalToken, LastSaleTime: 0 })
+        );
+        uint256 lMaxSaleExternal = calculateMaxSale(mTestPair, mExternalToken);
+        uint256 lMaxSaleOther = calculateMaxSale(lOtherPair, lOtherToken);
+        mFeeCollector.SellHolding(mExternalToken);
+        mFeeCollector.SellHolding(lOtherToken);
+
+        // assert
+        uint256 lOurBal = mDesiredToken.balanceOf(address(this));
+        uint256 lTestPairBalDesired = mDesiredToken.balanceOf(address(mTestPair));
+        uint256 lCollectorBalDesired = mDesiredToken.balanceOf(address(mFeeCollector));
+
+        assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 150e18 - lMaxSaleExternal);  // we sold lMaxSale
+        assertEq(mDesiredToken.balanceOf(address(mFeeCollector)), 50e18);  // mFeeCollector received nothing
+        assertEq(lOurBal, 100e18 - lCollectorBalDesired - lTestPairBalDesired);  // we received the result of the swap
+        assertEq(lOtherToken.balanceOf(address(mFeeCollector)), 2e18 - lMaxSaleOther);  // we sold as much as we could
     }
 }

@@ -129,6 +129,18 @@ contract FeeCollectorTest is DSTest
         mFeeCollector.SellHolding(mExternalToken);
     }
 
+    function testFail_disable_pair() public
+    {
+        // arrange
+        mExternalToken.Mint(address(mTestPair), 100e18);
+        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mTestPair.mint(address(mFeeCollector));
+
+        // act
+        mFeeCollector.SetPairStatus(mTestPair, true);
+        mFeeCollector.BreakApartLP(mTestPair);
+    }
+
     function test_withdraw_lp() public
     {
         mExternalToken.Mint(address(mTestPair), 100e18);

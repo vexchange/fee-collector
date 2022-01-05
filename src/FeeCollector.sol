@@ -23,7 +23,8 @@ contract FeeCollector is Ownable
     IERC20              private  mDesiredToken;
     address             private  mRecipient;
 
-    mapping(IERC20 => TokenConfig) private  mConfig;
+    mapping(IERC20 => TokenConfig)    private  mConfig;
+    mapping(IVexchangeV2Pair => bool) private  mDisabledPairs;
 
     constructor(
         IVexchangeV2Factory aVexchangeFactory,
@@ -105,10 +106,17 @@ contract FeeCollector is Ownable
         mConfig[aToken] = aConfig;
     }
 
+    function SetPairStatus(IVexchangeV2Pair aPair, bool aDisabled) external
+    {
+        mDisabledPairs[aPair] = aDisabled;
+    }
+
     // ***** Public Functions *****
     function BreakApartLP(IVexchangeV2Pair aPair) external
     {
         // checks
+        require(mDisabledPairs[aPair] == false, "target pair has been disabled");
+
         uint256 lOurHolding = aPair.balanceOf(address(this));
 
         // external

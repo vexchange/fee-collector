@@ -39,9 +39,14 @@ contract FeeCollector is Ownable
 
     function CalcMaxSaleImpact(IVexchangeV2Pair aPair, address aTokenToSell) private view returns (uint256)
     {
+        address lToken0 = aPair.token0();
         uint256 lSwapFee = aPair.swapFee();
         uint256 lPlatformFee = aPair.platformFee();
-        address lToken0 = aPair.token0();
+        if (lPlatformFee == 0)
+        {
+            // assume the full swap fee as rake if platform fee is zero
+            lPlatformFee = 10_000;
+        }
 
         uint256 lTokenHoldings;
         if (lToken0 == aTokenToSell)

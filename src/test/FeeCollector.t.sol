@@ -55,6 +55,11 @@ contract FeeCollectorTest is DSTest
         // pair state
         uint256 lSwapFee = aPair.swapFee();
         uint256 lPlatformFee = aPair.platformFee();
+        if (lPlatformFee == 0)
+        {
+            lPlatformFee = 10_000;
+        }
+
         uint256 lPlatformRake = lSwapFee * lPlatformFee;  // has been scaled by 1e8
 
         // balances
@@ -372,5 +377,37 @@ contract FeeCollectorTest is DSTest
         assertEq(mDesiredToken.balanceOf(address(mFeeCollector)), 50e18);  // mFeeCollector received nothing
         assertEq(lOurBal, 100e18 - lCollectorBalDesired - lTestPairBalDesired);  // we received the result of the swap
         assertEq(lOtherToken.balanceOf(address(mFeeCollector)), 2e18 - lMaxSaleOther);  // we sold as much as we could
+    }
+
+    function test_sell_holding_no_platform_fee() public
+    {
+        mExternalToken.Mint(address(mTestPair), 100e18);
+        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mTestPair.mint(address(1));
+
+        // sanity
+        mExternalToken.Mint(address(mTestPair), 100e18);
+        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mTestPair.mint(address(mFeeCollector));
+        mFeeCollector.BreakApartLP(mTestPair);
+        assertEq(mTestPair.balanceOf(address(mFeeCollector)),      0);
+        assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 100e18);
+        assertEq(mDesiredToken.balanceOf(address(mFeeCollector)),  50e18);
+        assertEq(mDesiredToken.balanceOf(address(this)),           0);
+
+        // act
+        mVexFactory.setPlatformFeeForPair(address(mTestPair), 0);
+
+        uint256 lMaxSale = calculateMaxSale(mTestPair, mExternalToken);
+        mFeeCollector.SellHolding(mExternalToken);
+
+        // assert
+        uint256 lOurBal = mDesiredToken.balanceOf(address(this));
+        uint256 lCollectorBal = mDesiredToken.balanceOf(address(mFeeCollector));
+        uint256 lTestPairBal = mDesiredToken.balanceOf(address(mTestPair));
+
+        assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 100e18 - lMaxSale);  // we sold lMaxSale
+        assertEq(mDesiredToken.balanceOf(address(mFeeCollector)), 50e18);  // mFeeCollector received nothing
+        assertEq(lOurBal, 100e18 - lCollectorBal - lTestPairBal);  // we received the result of the swap
     }
 }

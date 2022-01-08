@@ -111,7 +111,7 @@ contract FeeCollector is Ownable
         mConfig[aToken] = aConfig;
     }
 
-    function SetPairStatus(IVexchangeV2Pair aPair, bool aDisabled) external
+    function SetPairStatus(IVexchangeV2Pair aPair, bool aDisabled) external onlyOwner
     {
         mDisabledPairs[aPair] = aDisabled;
     }

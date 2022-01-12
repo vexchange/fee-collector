@@ -19,12 +19,12 @@ contract FeeCollector is Ownable
 {
     using SafeERC20 for IERC20;
 
-    IVexchangeV2Factory private  mVexchangeFactory;
-    IERC20              private  mDesiredToken;
-    address             private  mRecipient;
+    IVexchangeV2Factory public  mVexchangeFactory;
+    IERC20              public  mDesiredToken;
+    address             public  mRecipient;
 
-    mapping(IERC20 => TokenConfig)    private  mConfig;
-    mapping(IVexchangeV2Pair => bool) private  mDisabledPairs;
+    mapping(IERC20 => TokenConfig)    public  mConfig;
+    mapping(IVexchangeV2Pair => bool) public  mDisabledPairs;
 
     constructor(
         IVexchangeV2Factory aVexchangeFactory,

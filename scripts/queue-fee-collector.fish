@@ -13,7 +13,7 @@ set eta (math $now + $delay + 300)  # 5 min margin of error
 # Timelock
 # function queueTransaction(address target, uint value, string memory signature, bytes memory data, uint eta) public returns (bytes32)
 set queue_sig "queueTransaction(address,uint,string,bytes,uint)"
-set exec_sig "executeTransactio(address,uint,string,bytes,uint)"
+set exec_sig "executeTransaction(address,uint,string,bytes,uint)"
 set queue_calldata (seth calldata $queue_sig $vexchange_factory 0 "[]" $calldata $eta)
 set exec_calldata (seth calldata $exec_sig $vexchange_factory 0 "[]" $calldata $eta)
 

@@ -20,28 +20,29 @@ const BREAK_APART_LP_ABI =
 
 async function BreakApartLP()
 {
-    const pairs = new Map(Object.entries((await axios.get("https://api.vexchange.io/v1/pairs")).data));
+    const lPairs = new Map(Object.entries((await axios.get("https://api.vexchange.io/v1/pairs")).data));
 
-    const wallet = new SimpleWallet();
-    wallet.import(PRIVATE_KEY);
-    const net = new SimpleNet(MAINNET_NODE_URL);
-    const driver = await Driver.connect(net, wallet);
-    const provider = new Framework(driver);
+    const lWallet = new SimpleWallet();
+    lWallet.import(PRIVATE_KEY);
+    const lNet = new SimpleNet(MAINNET_NODE_URL);
+    const lDriver = await Driver.connect(lNet, lWallet);
+    const lProvider = new Framework(lDriver);
 
-    const feeCollectorContract = provider.thor.account(FEECOLLECTOR_ADDRESS);
-    const method = feeCollectorContract.method(BREAK_APART_LP_ABI);
+    const lFeeCollectorContract = lProvider.thor.account(FEECOLLECTOR_ADDRESS);
+    const lMethod = lFeeCollectorContract.method(BREAK_APART_LP_ABI);
 
-    for (const pair of pairs.keys())
+    for (const lPair of lPairs.keys())
     {
         try
         {
-            console.log("Attempting BreakApart for", pair);
-            const clause = method.asClause(pair);
-            const res = await provider.vendor
-                .sign("tx", [clause])
+            console.log("Attempting BreakApart for", lPair);
+            const lClause = lMethod.asClause(lPair);
+            
+            const lRes = await lProvider.vendor
+                .sign("tx", [lClause])
                 .request()
-            console.log(res);
-            console.log("BreakApart for", pair, "was succcessful");
+            console.log(lRes);
+            console.log("BreakApart for", lPair, "was succcessful");
         }
         catch(e)
         {

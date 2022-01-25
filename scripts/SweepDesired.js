@@ -1,8 +1,8 @@
 import { Framework } from "@vechain/connex-framework";
-import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-driver";
-import { privateKey, FEECOLLECTOR_ADDRESS } from "./config.js";
+import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-lDriver";
+import { PRIVATE_KEY, FEECOLLECTOR_ADDRESS, MAINNET_NODE_URL } from "./config.js";
 
-const SweepDesiredABI =
+const SWEEP_DESIRED_ABI =
 {
     "inputs": [],
     "name": "SweepDesired",
@@ -11,24 +11,24 @@ const SweepDesiredABI =
     "type": "function"
 }
 
-const SweepDesired = async () =>
+async function SweepDesired()
 {
-    const wallet = new SimpleWallet();
-    wallet.import(privateKey);
-    const net = new SimpleNet("https://mainnet-node.vexchange.io");
-    const driver = await Driver.connect(net, wallet);
-    const provider = new Framework(driver);
+    const lWallet = new SimpleWallet();
+    lWallet.import(PRIVATE_KEY);
+    const lNet = new SimpleNet(MAINNET_NODE_URL);
+    const lDriver = await Driver.connect(lNet, lWallet);
+    const lProvider = new Framework(lDriver);
 
-    const feeCollectorContract = provider.thor.account(FEECOLLECTOR_ADDRESS);
-    const method = feeCollectorContract.method(SweepDesiredABI);
+    const lFeeCollectorContract = lProvider.thor.account(FEECOLLECTOR_ADDRESS);
+    const lMethod = lFeeCollectorContract.lMethod(SWEEP_DESIRED_ABI);
     try
     {
         console.log("Attempting SweepDesired");
-        const clause = method.asClause();
-        const res = await provider.vendor
-            .sign("tx", [clause])
+        const lClause = lMethod.asClause();
+        const lRes = await lProvider.vendor
+            .sign("tx", [lClause])
             .request()
-        console.log(res);
+        console.log(lRes);
         console.log("SweepDesired was succcessful");
     }
     catch(e)

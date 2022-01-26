@@ -73,6 +73,24 @@ contract FeeCollectorTest is DSTest
             : lCollectorBal;
     }
 
+    function CalculateOutput(
+        uint256 aReserveIn,
+        uint256 aReserveOut,
+        uint256 aTokenIn,
+        uint256 aFee
+    ) private pure returns (uint256 rExpectedOut)
+    {
+        // the following formula is taken from VexchangeV2Library, using 1% as the fee, see:
+        //
+        // https://github.com/vexchange/vexchange-contracts/blob/183e8eef29dc9a28e0f84539bc2c66bb3f6103bf/
+        // vexchange-v2-periphery/contracts/libraries/VexchangeV2Library.sol#L49
+        uint256 lAmountInWithFee = aTokenIn * (10_000 - aFee);
+        uint256 lNumerator = lAmountInWithFee * aReserveOut;
+        uint256 lDenominator = aReserveIn * 10_000 + lAmountInWithFee;
+
+        rExpectedOut = lNumerator / lDenominator;
+    }
+
     // ***** Setup *****
     function setUp() public
     {
@@ -185,15 +203,16 @@ contract FeeCollectorTest is DSTest
         // act
         uint256 lMaxSale = calculateMaxSale(mTestPair, mExternalToken);
         mFeeCollector.SellHolding(mExternalToken);
+        mFeeCollector.SweepDesired();
 
         // assert
         uint256 lOurBal = mDesiredToken.balanceOf(address(this));
         uint256 lCollectorBal = mDesiredToken.balanceOf(address(mFeeCollector));
         uint256 lTestPairBal = mDesiredToken.balanceOf(address(mTestPair));
 
-        assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 100e18 - lMaxSale);  // we sold lMaxSale
-        assertEq(mDesiredToken.balanceOf(address(mFeeCollector)), 50e18);  // mFeeCollector received nothing
-        assertEq(lOurBal, 100e18 - lCollectorBal - lTestPairBal);  // we received the result of the swap
+        assertEq(lCollectorBal, 0); // we sweeped all
+        assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 100e18 - lMaxSale); // we sold lMaxSale
+        assertEq(lOurBal, 100e18 - lTestPairBal); // we received the result of the swap & sweep
     }
 
     function testFail_sell_holding() public
@@ -300,7 +319,9 @@ contract FeeCollectorTest is DSTest
         // assert
         uint256 lOtherPairBal = mExternalToken.balanceOf(address(lOtherPair));
         uint256 lCollectorBal = mExternalToken.balanceOf(address(mFeeCollector));
+        uint256 lRecipientBal = mExternalToken.balanceOf(address(this));
 
+        assertEq(lRecipientBal, 0);
         assertEq(lOtherToken.balanceOf(address(mFeeCollector)), 2e18 - lMaxSale);  // we sold as much as we could
         assertEq(lCollectorBal, 100e18 - lOtherPairBal);  // we have all external outside of other pair
     }
@@ -334,14 +355,18 @@ contract FeeCollectorTest is DSTest
             address(lOtherToken)
         ));
 
-        lOtherToken.Mint(address(lOtherPair), 2e18);  // this is a more expensive token
+        // pair 1 with 2 other & 50 external
+        lOtherToken.Mint(address(lOtherPair), 2e18);
         mExternalToken.Mint(address(lOtherPair), 50e18);
         lOtherPair.mint(address(1));
+
+        // pair 2 with 50 desired & 100 external
         mExternalToken.Mint(address(mTestPair), 100e18);
         mDesiredToken.Mint(address(mTestPair), 50e18);
         mTestPair.mint(address(1));
 
         // sanity
+        // pair 1
         lOtherToken.Mint(address(lOtherPair), 2e18);
         mExternalToken.Mint(address(lOtherPair), 50e18);
         lOtherPair.mint(address(mFeeCollector));
@@ -349,6 +374,8 @@ contract FeeCollectorTest is DSTest
         assertEq(lOtherPair.balanceOf(address(mFeeCollector)),     0);
         assertEq(lOtherToken.balanceOf(address(mFeeCollector)),    2e18);
         assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 50e18);
+
+        // pair 2
         mExternalToken.Mint(address(mTestPair), 100e18);
         mDesiredToken.Mint(address(mTestPair), 50e18);
         mTestPair.mint(address(mFeeCollector));
@@ -359,6 +386,10 @@ contract FeeCollectorTest is DSTest
         assertEq(mDesiredToken.balanceOf(address(this)),           0);
 
         // act
+        // for this scenario we will do two things:
+        //
+        // 1. sell mExternal for mDesired
+        // 2. sell lOther for mExternal
         mFeeCollector.UpdateConfig(
             lOtherToken,
             TokenConfig({ DisableSales: false, SwapTo: mExternalToken, LastSaleTime: 0 })
@@ -367,16 +398,26 @@ contract FeeCollectorTest is DSTest
         uint256 lMaxSaleOther = calculateMaxSale(lOtherPair, lOtherToken);
         mFeeCollector.SellHolding(mExternalToken);
         mFeeCollector.SellHolding(lOtherToken);
+        mFeeCollector.SweepDesired();
 
         // assert
         uint256 lOurBal = mDesiredToken.balanceOf(address(this));
         uint256 lTestPairBalDesired = mDesiredToken.balanceOf(address(mTestPair));
         uint256 lCollectorBalDesired = mDesiredToken.balanceOf(address(mFeeCollector));
 
-        assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 150e18 - lMaxSaleExternal);  // we sold lMaxSale
-        assertEq(mDesiredToken.balanceOf(address(mFeeCollector)), 50e18);  // mFeeCollector received nothing
-        assertEq(lOurBal, 100e18 - lCollectorBalDesired - lTestPairBalDesired);  // we received the result of the swap
         assertEq(lOtherToken.balanceOf(address(mFeeCollector)), 2e18 - lMaxSaleOther);  // we sold as much as we could
+        assertEq(lCollectorBalDesired, 0);  // we swept collector
+        assertEq(lOurBal, 100e18 - lTestPairBalDesired);  // we received the result of the swap & sweep
+
+        // we sold lMaxSale and received expected
+        uint256 lOtherSaleReceived = CalculateOutput(
+            2e18,
+            50e18,
+            lMaxSaleOther,
+            100
+        );
+        uint256 lExpected = 150e18 - lMaxSaleExternal + lOtherSaleReceived;
+        assertEq(mExternalToken.balanceOf(address(mFeeCollector)), lExpected);
     }
 
     function test_sell_holding_no_platform_fee() public
@@ -400,14 +441,147 @@ contract FeeCollectorTest is DSTest
 
         uint256 lMaxSale = calculateMaxSale(mTestPair, mExternalToken);
         mFeeCollector.SellHolding(mExternalToken);
+        mFeeCollector.SweepDesired();
 
         // assert
         uint256 lOurBal = mDesiredToken.balanceOf(address(this));
-        uint256 lCollectorBal = mDesiredToken.balanceOf(address(mFeeCollector));
         uint256 lTestPairBal = mDesiredToken.balanceOf(address(mTestPair));
 
         assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 100e18 - lMaxSale);  // we sold lMaxSale
-        assertEq(mDesiredToken.balanceOf(address(mFeeCollector)), 50e18);  // mFeeCollector received nothing
-        assertEq(lOurBal, 100e18 - lCollectorBal - lTestPairBal);  // we received the result of the swap
+        assertEq(lOurBal, 100e18 - lTestPairBal);  // we received the result of the swap & sweep
+    }
+
+    function test_sell_profitable() public
+    {
+        // create new pool with 10x and 10y
+        mExternalToken.Mint(address(mTestPair), 10e18);
+        mDesiredToken.Mint(address(mTestPair), 10e18);
+        mTestPair.mint(address(1));
+
+        // give FeeCollector 25bips * 10 of y
+        uint256 lAmountToSell = 0.025e18;
+        mExternalToken.Mint(address(mFeeCollector), lAmountToSell);
+
+        // act
+        mFeeCollector.SellHolding(mExternalToken);
+
+        // assert
+        uint256 lExpectedOut = CalculateOutput(
+            10e18,
+            10e18,
+            0.025e18,
+            100
+        );
+
+        assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 0);
+        assertEq(mDesiredToken.balanceOf(address(mFeeCollector)), lExpectedOut);
+    }
+
+    function test_sell_profitable_other() public
+    {
+        // create other token
+        MintableERC20 lOtherToken = new MintableERC20("Other Token", "OTHER");
+        IVexchangeV2Pair lOtherPair = IVexchangeV2Pair(mVexFactory.createPair(
+            address(mExternalToken),
+            address(lOtherToken)
+        ));
+
+        // create new pool with 10x and 10y
+        mExternalToken.Mint(address(lOtherPair), 10e18);
+        lOtherToken.Mint(address(lOtherPair), 2.5e18);
+        lOtherPair.mint(address(1));
+
+        // give FeeCollector 25bips * 10 of y
+        uint256 lAmountToSell = 0.025e18;
+        mExternalToken.Mint(address(mFeeCollector), lAmountToSell);
+
+        // act
+        mFeeCollector.UpdateConfig(
+            mExternalToken,
+            TokenConfig({ DisableSales: false, SwapTo: lOtherToken, LastSaleTime: 0 })
+        );
+        mFeeCollector.SellHolding(mExternalToken);
+
+        // assert
+        uint256 lExpectedOut = CalculateOutput(
+            10e18,
+            2.5e18,
+            0.025e18,
+            100
+        );
+
+        assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 0);
+        assertEq(lOtherToken.balanceOf(address(mFeeCollector)), lExpectedOut);
+    }
+
+    function test_sell_profitable_no_helper() public
+    {
+        // create new pool with 10x and 10y
+        mExternalToken.Mint(address(mTestPair), 10e18);
+        mDesiredToken.Mint(address(mTestPair), 10e18);
+        mTestPair.mint(address(1));
+
+        // give FeeCollector 25bips * 10 of y
+        uint256 lAmountToSell = 0.025e18;
+        mExternalToken.Mint(address(mFeeCollector), lAmountToSell);
+
+        // initiate sale, expecting all to be sold for roughly equivalent amount of y
+        mFeeCollector.SellHolding(mExternalToken);
+
+        // assert
+        // the following formula is taken from VexchangeV2Library, using 1% as the fee, see:
+        //
+        // https://github.com/vexchange/vexchange-contracts/blob/183e8eef29dc9a28e0f84539bc2c66bb3f6103bf/
+        // vexchange-v2-periphery/contracts/libraries/VexchangeV2Library.sol#L49
+        // NB: we re-implement the helper function here for redundancy
+        uint256 lAmountInWithFee = lAmountToSell * (100 - 1);
+        uint256 lNumerator = lAmountInWithFee * 10e18;
+        uint256 lDenominator = 10e18 * 100 + lAmountInWithFee;
+
+        uint256 lExpectedOut = lNumerator / lDenominator;
+
+        assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 0);
+        assertEq(mDesiredToken.balanceOf(address(mFeeCollector)), lExpectedOut);
+    }
+
+    function test_sell_amount_is_optimal(uint256 aSellAmount) public
+    {
+        // create new pool with 10x and 10y
+        mExternalToken.Mint(address(mTestPair), 10e18);
+        mDesiredToken.Mint(address(mTestPair), 10e18);
+        mTestPair.mint(address(1));
+
+        // give FeeCollector 25bips * 10 of y
+        uint256 lMaxSaleAmount = 0.025e18;
+        if (aSellAmount > lMaxSaleAmount) { return; }
+
+        uint256 lExpectedOut = CalculateOutput(
+            10e18,
+            10e18,
+            aSellAmount,
+            100
+        );
+        if (lExpectedOut == 0) { return; }
+
+        mExternalToken.Mint(address(mFeeCollector), aSellAmount);
+
+        // act
+        mFeeCollector.SellHolding(mExternalToken);
+
+        // assert
+
+        assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 0);
+        assertEq(mDesiredToken.balanceOf(address(mFeeCollector)), lExpectedOut);
+    }
+
+    function test_output_calc() public
+    {
+        uint256 lReserve0 = 10e18;
+        uint256 lReserve1 = 10e18;
+        uint256 lAmountIn = 10e18;
+
+        uint256 lAmountOut = CalculateOutput(lReserve0, lReserve1, lAmountIn, 0);
+
+        assertEq(lAmountOut, 5e18);
     }
 }

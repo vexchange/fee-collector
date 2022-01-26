@@ -75,28 +75,40 @@ contract FeeCollector is Ownable
         IERC20 aFromToken,
         IERC20 aToToken,
         uint256 aAmountIn,
-        uint256 aSwapFee,
-        address aTo
+        uint256 aSwapFee
     ) private
     {
         (uint256 lReserve0, uint256 lReserve1, ) = aPair.getReserves();
-        uint256 lAmountInWithFee = aAmountIn * aSwapFee / 1e4;
 
         if (aToToken > aFromToken)
         {
-            uint256 lAmountOut = lAmountInWithFee * lReserve1 / (lReserve0 * 10_000 + lAmountInWithFee);
+            uint256 lReserveIn = lReserve0;
+            uint256 lReserveOut = lReserve1;
+
+            uint256 lAmountInWithFee = aAmountIn * (10_000 - aSwapFee);
+            uint256 lNumerator = lAmountInWithFee * lReserveOut;
+            uint256 lDenomintaor = 10_000 * lReserveIn + lAmountInWithFee;
+
+            uint256 lAmountOut = lNumerator / lDenomintaor;
 
             // external
             IERC20(aFromToken).safeTransfer(address(aPair), aAmountIn);
-            aPair.swap(lAmountOut, 0, aTo, "");
+            aPair.swap(0, lAmountOut, address(this), "");
         }
         else
         {
-            uint256 lAmountOut = lAmountInWithFee * lReserve0 / (lReserve1 * 10_000 + lAmountInWithFee);
+            uint256 lReserveIn = lReserve1;
+            uint256 lReserveOut = lReserve0;
+
+            uint256 lAmountInWithFee = aAmountIn * (10_000 - aSwapFee);
+            uint256 lNumerator = lAmountInWithFee * lReserveOut;
+            uint256 lDenomintaor = 10_000 * lReserveIn + lAmountInWithFee;
+
+            uint256 lAmountOut = lNumerator / lDenomintaor;
 
             // external
             IERC20(aFromToken).safeTransfer(address(aPair), aAmountIn);
-            aPair.swap(0, lAmountOut, aTo, "");
+            aPair.swap(lAmountOut, 0, address(this), "");
         }
     }
 
@@ -157,7 +169,7 @@ contract FeeCollector is Ownable
         lConfig.LastSaleTime = block.timestamp;
 
         // external
-        Swap(lSwapPair, aToken, lTargetToken, lAmountToSell, lSwapPair.swapFee(), mRecipient);
+        Swap(lSwapPair, aToken, lTargetToken, lAmountToSell, lSwapPair.swapFee());
     }
 
     function SweepDesired() external

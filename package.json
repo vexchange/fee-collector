@@ -5,7 +5,8 @@
     "mdlint": "markdownlint .",
     "breakapartLP": "node scripts/BreakApartLP.js",
     "sellHolding": "node scripts/SellHolding.js",
-    "sweepDesired": "node scripts/SweepDesired.js"
+    "sweepDesired": "node scripts/SweepDesired.js",
+    "withdrawTokens": "node scripts/WithdrawTokens.js"
   },
   "devDependencies": {
     "ethers": "5.5.2",
@@ -16,7 +17,8 @@
     "@vechain/connex": "^2.0.9",
     "axios": "^0.25.0",
     "dotenv": "^14.2.0",
-    "markdownlint-cli": "0.30.0"
+    "markdownlint-cli": "0.30.0",
+    "readline-sync": "^1.4.10"
   },
   "type": "module"
 }

@@ -147,7 +147,7 @@ contract FeeCollectorTest is DSTest
         // act
         mFeeCollector.UpdateConfig(
             mExternalToken,
-            TokenConfig({ DisableSales: true, SwapTo: IERC20(address(0)), LastSaleTime: 0 })
+            TokenConfig({ IsDesired: true, SwapTo: IERC20(address(0)), LastSaleTime: 0 })
         );
         mFeeCollector.SellHolding(mExternalToken);
     }
@@ -160,7 +160,7 @@ contract FeeCollectorTest is DSTest
         mTestPair.mint(address(mFeeCollector));
 
         // act
-        mFeeCollector.SetPairStatus(mTestPair, true);
+        mFeeCollector.SetLpDesired(mTestPair, true);
         mFeeCollector.BreakApartLP(mTestPair);
     }
 
@@ -311,7 +311,7 @@ contract FeeCollectorTest is DSTest
         uint256 lMaxSale = calculateMaxSale(lOtherPair, lOtherToken);
         mFeeCollector.UpdateConfig(
             lOtherToken,
-            TokenConfig({ DisableSales: false, SwapTo: mExternalToken, LastSaleTime: 0 })
+            TokenConfig({ IsDesired: false, SwapTo: mExternalToken, LastSaleTime: 0 })
         );
         mFeeCollector.SellHolding(lOtherToken);
         mFeeCollector.SweepDesired();
@@ -392,7 +392,7 @@ contract FeeCollectorTest is DSTest
         // 2. sell lOther for mExternal
         mFeeCollector.UpdateConfig(
             lOtherToken,
-            TokenConfig({ DisableSales: false, SwapTo: mExternalToken, LastSaleTime: 0 })
+            TokenConfig({ IsDesired: false, SwapTo: mExternalToken, LastSaleTime: 0 })
         );
         uint256 lMaxSaleExternal = calculateMaxSale(mTestPair, mExternalToken);
         uint256 lMaxSaleOther = calculateMaxSale(lOtherPair, lOtherToken);
@@ -498,7 +498,7 @@ contract FeeCollectorTest is DSTest
         // act
         mFeeCollector.UpdateConfig(
             mExternalToken,
-            TokenConfig({ DisableSales: false, SwapTo: lOtherToken, LastSaleTime: 0 })
+            TokenConfig({ IsDesired: false, SwapTo: lOtherToken, LastSaleTime: 0 })
         );
         mFeeCollector.SellHolding(mExternalToken);
 

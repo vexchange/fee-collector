@@ -10,7 +10,7 @@ import "@vexchange-contracts/vexchange-v2-core/contracts/interfaces/IVexchangeV2
 
 struct TokenConfig
 {
-    bool    DisableSales;  // flag to disable selling of desirable assets
+    bool    IsDesired;     // flag to disable selling of desirable assets
     IERC20  SwapTo;        // if not set, will swap to mDesiredToken
     uint256 LastSaleTime;  // used to throttle sale speed
 }
@@ -24,7 +24,7 @@ contract FeeCollector is Ownable
     address             public immutable mRecipient;
 
     mapping(IERC20 => TokenConfig)    public  mConfig;
-    mapping(IVexchangeV2Pair => bool) public  mDisabledPairs;
+    mapping(IVexchangeV2Pair => bool) public  mDesiredLps;
 
     constructor(
         IVexchangeV2Factory aVexchangeFactory,
@@ -123,16 +123,16 @@ contract FeeCollector is Ownable
         mConfig[aToken] = aConfig;
     }
 
-    function SetPairStatus(IVexchangeV2Pair aPair, bool aDisabled) external onlyOwner
+    function SetLpDesired(IVexchangeV2Pair aPair, bool aDesired) external onlyOwner
     {
-        mDisabledPairs[aPair] = aDisabled;
+        mDesiredLps[aPair] = aDesired;
     }
 
     // ***** Public Functions *****
     function BreakApartLP(IVexchangeV2Pair aPair) external
     {
         // checks
-        require(mDisabledPairs[aPair] == false, "target pair has been disabled");
+        require(mDesiredLps[aPair] == false, "target LP token is desired");
 
         uint256 lOurHolding = aPair.balanceOf(address(this));
 
@@ -146,7 +146,7 @@ contract FeeCollector is Ownable
         require(aToken != mDesiredToken, "cannot sell desired token");
 
         TokenConfig storage lConfig = mConfig[aToken];
-        require(lConfig.DisableSales == false, "selling disabled for token");
+        require(lConfig.IsDesired == false, "target token is desired");
         require(lConfig.LastSaleTime + 8 hours < block.timestamp, "sale too soon");
 
         IERC20 lTargetToken;

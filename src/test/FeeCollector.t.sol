@@ -160,7 +160,7 @@ contract FeeCollectorTest is DSTest
         mTestPair.mint(address(mFeeCollector));
 
         // act
-        mFeeCollector.SetLpDesired(mTestPair, true);
+        mFeeCollector.SetDesiredLp(mTestPair, true);
         mFeeCollector.BreakApartLP(mTestPair);
     }
 
@@ -544,6 +544,62 @@ contract FeeCollectorTest is DSTest
         assertEq(mDesiredToken.balanceOf(address(mFeeCollector)), lExpectedOut);
     }
 
+    function test_withdraw_other_desired() public
+    {
+        // arrange
+        MintableERC20 lOtherToken = new MintableERC20("Other Token", "OTHER");
+        IVexchangeV2Pair lOtherPair = IVexchangeV2Pair(mVexFactory.createPair(
+            address(mExternalToken),
+            address(lOtherToken)
+        ));
+
+        // mint initial liquidity and send to locked addr
+        lOtherToken.Mint(address(lOtherPair), 2e18);
+        mExternalToken.Mint(address(lOtherPair), 50e18);
+        lOtherPair.mint(address(1));
+
+        // give the mFeeCollector some LP tokens
+        lOtherToken.Mint(address(lOtherPair), 2e18);
+        mExternalToken.Mint(address(lOtherPair), 50e18);
+        lOtherPair.mint(address(mFeeCollector));
+        
+        // sanity
+        uint256 lFeeCollectorBal = lOtherPair.balanceOf(address(mFeeCollector));
+        assertEq(lOtherPair.balanceOf(address(this)), 0);
+
+        // act
+        mFeeCollector.SetDesiredLp(lOtherPair, true);
+        mFeeCollector.SweepDesired(address(lOtherPair));
+
+        // assert - all bal has moved to us from fee collector
+        assertEq(lOtherPair.balanceOf(address(mFeeCollector)), 0);
+        assertEq(lOtherPair.balanceOf(address(this)), lFeeCollectorBal);
+    }
+
+    function testFail_withdraw_other_undesired() public
+    {
+        // arrange
+        MintableERC20 lOtherToken = new MintableERC20("Other Token", "OTHER");
+        IVexchangeV2Pair lOtherPair = IVexchangeV2Pair(mVexFactory.createPair(
+            address(mExternalToken),
+            address(lOtherToken)
+        ));
+
+        // mint initial liquidity and send to locked addr
+        lOtherToken.Mint(address(lOtherPair), 2e18);
+        mExternalToken.Mint(address(lOtherPair), 50e18);
+        lOtherPair.mint(address(1));
+
+        // give the mFeeCollector some LP tokens
+        lOtherToken.Mint(address(lOtherPair), 2e18);
+        mExternalToken.Mint(address(lOtherPair), 50e18);
+        lOtherPair.mint(address(mFeeCollector));
+
+        // act
+        mFeeCollector.SweepDesired(address(lOtherPair));
+    }
+
+    // fuzz testing
     function test_sell_amount_is_optimal(uint256 aSellAmount) public
     {
         // create new pool with 10x and 10y
@@ -574,6 +630,7 @@ contract FeeCollectorTest is DSTest
         assertEq(mDesiredToken.balanceOf(address(mFeeCollector)), lExpectedOut);
     }
 
+    // testing the test helpers
     function test_output_calc() public
     {
         uint256 lReserve0 = 10e18;

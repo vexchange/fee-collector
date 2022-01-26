@@ -123,7 +123,7 @@ contract FeeCollector is Ownable
         mConfig[aToken] = aConfig;
     }
 
-    function SetLpDesired(IVexchangeV2Pair aPair, bool aDesired) external onlyOwner
+    function SetDesiredLp(IVexchangeV2Pair aPair, bool aDesired) external onlyOwner
     {
         mDesiredLps[aPair] = aDesired;
     }
@@ -170,6 +170,16 @@ contract FeeCollector is Ownable
 
         // external
         Swap(lSwapPair, aToken, lTargetToken, lAmountToSell, lSwapPair.swapFee());
+    }
+
+    function SweepDesired(address aToken) external
+    {
+        require(
+            mConfig[IERC20(aToken)].IsDesired == true || mDesiredLps[IVexchangeV2Pair(aToken)] == true,
+            "cannot sweep undesired lp / token"
+        );
+
+        IERC20(aToken).transfer(mRecipient, IERC20(aToken).balanceOf(address(this)));
     }
 
     function SweepDesired() external

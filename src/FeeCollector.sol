@@ -87,9 +87,9 @@ contract FeeCollector is Ownable
 
             uint256 lAmountInWithFee = aAmountIn * (10_000 - aSwapFee);
             uint256 lNumerator = lAmountInWithFee * lReserveOut;
-            uint256 lDenomintaor = 10_000 * lReserveIn + lAmountInWithFee;
+            uint256 lDenominator = 10_000 * lReserveIn + lAmountInWithFee;
 
-            uint256 lAmountOut = lNumerator / lDenomintaor;
+            uint256 lAmountOut = lNumerator / lDenominator;
 
             // external
             IERC20(aFromToken).safeTransfer(address(aPair), aAmountIn);
@@ -102,9 +102,9 @@ contract FeeCollector is Ownable
 
             uint256 lAmountInWithFee = aAmountIn * (10_000 - aSwapFee);
             uint256 lNumerator = lAmountInWithFee * lReserveOut;
-            uint256 lDenomintaor = 10_000 * lReserveIn + lAmountInWithFee;
+            uint256 lDenominator = 10_000 * lReserveIn + lAmountInWithFee;
 
-            uint256 lAmountOut = lNumerator / lDenomintaor;
+            uint256 lAmountOut = lNumerator / lDenominator;
 
             // external
             IERC20(aFromToken).safeTransfer(address(aPair), aAmountIn);

@@ -1,5 +1,5 @@
 import { Framework } from "@vechain/connex-framework";
-import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-lDriver";
+import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-driver";
 import { PRIVATE_KEY, FEECOLLECTOR_ADDRESS, MAINNET_NODE_URL } from "./config.js";
 
 const SWEEP_DESIRED_ABI =
@@ -20,7 +20,7 @@ async function SweepDesired()
     const lProvider = new Framework(lDriver);
 
     const lFeeCollectorContract = lProvider.thor.account(FEECOLLECTOR_ADDRESS);
-    const lMethod = lFeeCollectorContract.lMethod(SWEEP_DESIRED_ABI);
+    const lMethod = lFeeCollectorContract.method(SWEEP_DESIRED_ABI);
     try
     {
         console.log("Attempting SweepDesired");

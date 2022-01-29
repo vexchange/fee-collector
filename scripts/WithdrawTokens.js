@@ -1,9 +1,8 @@
 import { Framework } from "@vechain/connex-framework";
 import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-driver";
 import axios from "axios";
-import { FEECOLLECTOR_ADDRESS, WVET_ADDRESS, PRIVATE_KEY, MAINNET_NODE_URL } from "./config.js";
+import { FEECOLLECTOR_ADDRESS, PRIVATE_KEY, MAINNET_NODE_URL } from "./config.js";
 import * as readlineSync from "readline-sync";
-// const { readlineSync } = pkg;
 
 const WITHDRAW_TOKENS_ABI = 
 {
@@ -75,6 +74,8 @@ async function WithdrawTokens()
             console.error("Error", e);
         }
     }
+
+    console.log("Loop Finished");
 }
 
 WithdrawTokens();

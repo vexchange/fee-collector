@@ -49,6 +49,8 @@ async function BreakApartLP()
             console.error("Error", e);
         }
     }
+
+    console.log("Loop Finished");
 }
 
 BreakApartLP();

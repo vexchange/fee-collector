@@ -1,7 +1,7 @@
 import { Framework } from "@vechain/connex-framework";
 import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-driver";
 import axios from "axios";
-import { PRIVATE_KEY, FEECOLLECTOR_ADDRESS, MAINNET_NODE_URL } from "./config.js";
+import { PRIVATE_KEY, FEE_COLLECTOR_ADDRESS, MAINNET_NODE_URL } from "./config.js";
 
 const BREAK_APART_LP_ABI =
 {
@@ -28,7 +28,7 @@ async function BreakApartLP()
     const lDriver = await Driver.connect(lNet, lWallet);
     const lProvider = new Framework(lDriver);
 
-    const lFeeCollectorContract = lProvider.thor.account(FEECOLLECTOR_ADDRESS);
+    const lFeeCollectorContract = lProvider.thor.account(FEE_COLLECTOR_ADDRESS);
     const lMethod = lFeeCollectorContract.method(BREAK_APART_LP_ABI);
 
     for (const lPair of lPairs.keys())

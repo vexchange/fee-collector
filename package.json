@@ -6,7 +6,8 @@
     "breakapartLP": "node scripts/BreakApartLP.js",
     "sellHolding": "node scripts/SellHolding.js",
     "sweepDesired": "node scripts/SweepDesired.js",
-    "withdrawTokens": "node scripts/WithdrawTokens.js"
+    "withdrawTokens": "node scripts/WithdrawTokens.js",
+    "transferTokens": "node scripts/TransferTokens.js"
   },
   "devDependencies": {
     "ethers": "5.5.2",

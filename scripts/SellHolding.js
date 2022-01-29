@@ -1,7 +1,7 @@
 import { Framework } from "@vechain/connex-framework";
 import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-driver";
 import axios from "axios";
-import { FEECOLLECTOR_ADDRESS, WVET_ADDRESS, PRIVATE_KEY, MAINNET_NODE_URL } from "./config.js";
+import { FEE_COLLECTOR_ADDRESS, WVET_ADDRESS, PRIVATE_KEY, MAINNET_NODE_URL } from "./config.js";
 
 const SELL_HOLDING_ABI =
 {
@@ -28,7 +28,7 @@ async function SellHolding()
     const lDriver = await Driver.connect(lNet, lWallet);
     const lProvider = new Framework(lDriver);
 
-    const lFeeCollectorContract = lProvider.thor.account(FEECOLLECTOR_ADDRESS);
+    const lFeeCollectorContract = lProvider.thor.account(FEE_COLLECTOR_ADDRESS);
     const lMethod = lFeeCollectorContract.method(SELL_HOLDING_ABI);
 
     for (const lToken of lTokens.keys())

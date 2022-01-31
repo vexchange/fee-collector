@@ -45,7 +45,6 @@ const SWEEP_DESIRED_MANUAL_ABI =
 
 async function SweepDesired(aTokenAddress=undefined)
 {
-    console.log(aTokenAddress);
     const lWallet = new SimpleWallet();
     lWallet.import(PRIVATE_KEY);
     const lNet = new SimpleNet(MAINNET_NODE_URL);

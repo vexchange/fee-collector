@@ -81,7 +81,7 @@ async function WithdrawTokens()
         }
     }
 
-    console.log("Loop Finished");
+    lDriver.close();
 }
 
 WithdrawTokens();

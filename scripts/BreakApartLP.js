@@ -73,7 +73,7 @@ async function BreakApartLP()
         }
     }
 
-    console.log("Loop Finished");
+    lDriver.close();
 }
 
 BreakApartLP();

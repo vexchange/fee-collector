@@ -99,6 +99,8 @@ async function SweepDesired(aTokenAddress=undefined)
     {
         console.error("Error", e);
     }
+
+    lDriver.close();
 }
 
 const TOKEN_ADDRESS = process.argv[2];

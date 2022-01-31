@@ -74,6 +74,8 @@ async function SellHolding()
             console.error("Error", e);
         }
     }
+
+    lDriver.close();
 }
 
 SellHolding();

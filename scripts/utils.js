@@ -33,7 +33,7 @@ export async function GetERC20Balance(aToken, aHolder, aProvider)
 {
     const lTokenContract = aProvider.thor.account(aToken);
     const lMethod = lTokenContract.method(BALANCE_OF_ABI);
-
     const lRes = await lMethod.call(aHolder);
+
     return BigNumber.from(lRes.data);
 }

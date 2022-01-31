@@ -1,10 +1,10 @@
 import { Framework } from "@vechain/connex-framework";
 import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-driver";
 import axios from "axios";
-import { FEE_COLLECTOR_ADDRESS, PRIVATE_KEY, MAINNET_NODE_URL, VEX_ADDRESS } from "./config.js";
-import * as readlineSync from "readline-sync";
+import { FEE_COLLECTOR_ADDRESS, PRIVATE_KEY, MAINNET_NODE_URL, DEPLOYER_ADDRESS } from "./config.js";
+import {GetERC20Balance} from "./utils.js";
 
-const WITHDRAW_TOKENS_ABI = 
+const WITHDRAW_TOKENS_ABI =
 {
     "inputs": [
       {
@@ -39,14 +39,20 @@ async function WithdrawTokens()
 
     for (const lToken of lTokens.keys())
     {
-        console.log("Attempting WithdrawTokens for", lToken);
-        
-        let input = readlineSync.question("Confirm you want to continue (y/n) ");
-        if (input != 'y') { continue; }
-        
+        const lTokenBalance = await GetERC20Balance(lToken, FEE_COLLECTOR_ADDRESS, lProvider);
+        const lTokenName = lTokens.get(lToken).name;
+
+        if (lTokenBalance.eq(0))
+        {
+            console.log("Balance for", lTokenName, "is zero. Skipping withdrawal for this token");
+            continue;
+        }
+
+        console.log("Attempting WithdrawTokens for", lTokenName);
+
         try
         {
-            const lClause = lMethod.asClause(lToken, "0x133720c677ac960Fd6692457233D2CeEA3754529");
+            const lClause = lMethod.asClause(lToken, DEPLOYER_ADDRESS);
             const lRes = await lProvider.vendor
                         .sign("tx", [lClause])
                         .request();
@@ -66,7 +72,7 @@ async function WithdrawTokens()
             }
             else
             {
-                console.log("Transfer", lToken, "was succcessful");    
+                console.log("Transfer", lToken, "was succcessful");
             }
         }
         catch(e)

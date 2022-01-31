@@ -2,6 +2,7 @@ import { Framework } from "@vechain/connex-framework";
 import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-driver";
 import axios from "axios";
 import { PRIVATE_KEY, FEE_COLLECTOR_ADDRESS, MAINNET_NODE_URL } from "./config.js";
+import { GetERC20Balance } from "./utils.js";
 
 const BREAK_APART_LP_ABI =
 {
@@ -33,16 +34,38 @@ async function BreakApartLP()
 
     for (const lPair of lPairs.keys())
     {
+        const lBalance = await GetERC20Balance(lPair, FEE_COLLECTOR_ADDRESS, lProvider);
+        if (lBalance.eq(0))
+        {
+            console.log("Balance for", lPair, "is zero. Skipping breaking apart for this LP");
+            continue;
+        }
+
         try
         {
             console.log("Attempting BreakApart for", lPair);
             const lClause = lMethod.asClause(lPair);
-            
             const lRes = await lProvider.vendor
                 .sign("tx", [lClause])
                 .request()
-            console.log(lRes);
-            console.log("BreakApart for", lPair, "was succcessful");
+
+            let lTxReceipt;
+            const lTxVisitor = lProvider.thor.transaction(lRes.txid);
+            const lTicker = lProvider.thor.ticker();
+
+            while(!lTxReceipt) {
+                await lTicker.next();
+                lTxReceipt = await lTxVisitor.getReceipt();
+            }
+
+            if (lTxReceipt.reverted)
+            {
+                console.log("tx was unsuccessful");
+            }
+            else
+            {
+                console.log("BreakApart for", lPair, "was succcessful");
+            }
         }
         catch(e)
         {

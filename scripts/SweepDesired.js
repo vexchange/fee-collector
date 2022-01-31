@@ -1,6 +1,7 @@
 import { Framework } from "@vechain/connex-framework";
 import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-driver";
 import { PRIVATE_KEY, FEE_COLLECTOR_ADDRESS, MAINNET_NODE_URL } from "./config.js";
+import { isAddress } from "ethers/lib/utils.js";
 
 const SWEEP_DESIRED_ABI =
 {
@@ -11,7 +12,22 @@ const SWEEP_DESIRED_ABI =
     "type": "function"
 }
 
-async function SweepDesired()
+const SWEEP_DESIRED_MANUAL_ABI =
+{
+    "inputs": [
+        {
+            "internalType": "address",
+            "name": "aToken",
+            "type": "address"
+        }
+    ],
+    "name": "SweepDesired",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+}
+
+async function SweepDesired(aTokenAddress=undefined)
 {
     const lWallet = new SimpleWallet();
     lWallet.import(PRIVATE_KEY);
@@ -20,16 +36,37 @@ async function SweepDesired()
     const lProvider = new Framework(lDriver);
 
     const lFeeCollectorContract = lProvider.thor.account(FEE_COLLECTOR_ADDRESS);
-    const lMethod = lFeeCollectorContract.method(SWEEP_DESIRED_ABI);
+
+    const lMethod = aTokenAddress ? lFeeCollectorContract.method(SWEEP_DESIRED_MANUAL_ABI)
+                                 : lFeeCollectorContract.method(SWEEP_DESIRED_ABI);
+
     try
     {
         console.log("Attempting SweepDesired");
-        const lClause = lMethod.asClause();
+        const lClause = aTokenAddress ? lMethod.asClause(aTokenAddress)
+                                     : lMethod.asClause();
+
         const lRes = await lProvider.vendor
             .sign("tx", [lClause])
             .request()
-        console.log(lRes);
-        console.log("SweepDesired was succcessful");
+
+        let lTxReceipt;
+        const lTxVisitor = lProvider.thor.transaction(lRes.txid);
+        const lTicker = lProvider.thor.ticker();
+
+        while(!lTxReceipt) {
+            await lTicker.next();
+            lTxReceipt = await lTxVisitor.getReceipt();
+        }
+
+        if (lTxReceipt.reverted)
+        {
+            console.log("tx was unsuccessful");
+        }
+        else
+        {
+            console.log("SweepDesired was succcessful");
+        }
     }
     catch(e)
     {
@@ -37,4 +74,10 @@ async function SweepDesired()
     }
 }
 
-SweepDesired();
+const TOKEN_ADDRESS = process.argv[2];
+if (TOKEN_ADDRESS && !isAddress(TOKEN_ADDRESS))
+{
+    throw Error("Invalid Token Address Provided");
+}
+
+SweepDesired(TOKEN_ADDRESS);

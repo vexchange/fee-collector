@@ -2,3 +2,5 @@
 /ref
 /node_modules
 /cache
+
+.env

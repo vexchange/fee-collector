@@ -85,8 +85,8 @@ async function Transfer()
             }
             else
             {
-            }
                 console.log("Transfer", lToken, "was succcessful");
+            }
         }
         catch(e)
         {

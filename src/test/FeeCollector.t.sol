@@ -45,7 +45,7 @@ contract FeeCollectorTest is DSTest
     {
         string[] memory cmds = new string[](2);
         cmds[0] = "node";
-        cmds[1] = "scripts/getBytecode.js";
+        cmds[1] = "scripts/getBytecode.cjs";
 
         return hevm.ffi(cmds);
     }

@@ -1,7 +1,7 @@
 import { Framework } from "@vechain/connex-framework";
 import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-driver";
 import axios from "axios";
-import { PRIVATE_KEY, MAINNET_NODE_URL, DEPLOYER_ADDRESS, FEE_COLLECTOR_ADDRESS, VEX_ADDRESS } from "./config.js";
+import { PRIVATE_KEY, MAINNET_NODE_URL, DEPLOYER_ADDRESS, FEE_COLLECTOR_ADDRESS, VEX_ADDRESS, VTHO_ADDRESS } from "./config.js";
 import { GetERC20Balance } from "./utils.js";
 import { BigNumber as BN } from "ethers";
 
@@ -45,7 +45,7 @@ async function Transfer()
     for (const lToken of lTokens.keys())
     {
         console.log("Attempting Transfer for", lToken);
-        if (lToken == VEX_ADDRESS)
+        if (lToken.toLowerCase() == VEX_ADDRESS.toLowerCase())
         {
             console.log("skipping VEX");
             continue;
@@ -54,7 +54,12 @@ async function Transfer()
         try
         {
             const lTokenContract = lProvider.thor.account(lToken);
-            const lBalance = (await GetERC20Balance(lToken, DEPLOYER_ADDRESS, lProvider));
+            let lBalance = (await GetERC20Balance(lToken, DEPLOYER_ADDRESS, lProvider));
+
+            if (lToken.toLowerCase() == VTHO_ADDRESS.toLowerCase())
+            {
+                lBalance = lBalance.mul(9).div(10);
+            }
 
             if (lBalance.eq(0))
             {

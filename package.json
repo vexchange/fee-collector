@@ -1,8 +1,15 @@
 {
   "scripts": {
-    "lint": "npm run solhint && npm run mdlint",
-    "solhint": "solhint src/**/*.sol",
-    "mdlint": "markdownlint .",
+    "mdlint": "markdownlint . --fix",
+    "mdlint:check": "markdownlint .",
+    "reinstall": "rm -rf node_modules package-lock.json && npm install",
+    "prettier": "prettier --write '**/*.json'",
+    "prettier:list": "prettier --list-different '**/*.json'",
+    "prettier:check": "prettier --check '**/*.json'",
+    "solhint": "solhint --config ./.solhint.json 'src/**/*.sol' --fix",
+    "solhint:check": "solhint --config ./.solhint.json 'src/**/*.sol'",
+    "lint": "npm run solhint && npm run prettier && npm run mdlint",
+    "lint:check": "npm run solhint:check && npm run prettier:check && npm run mdlint:check",
     "breakapartLP": "node scripts/BreakApartLP.js",
     "sellHolding": "node scripts/SellHolding.js",
     "sweepDesired": "node scripts/SweepDesired.js",

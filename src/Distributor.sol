@@ -94,6 +94,7 @@ contract Distributor is Ownable, DistributorInterface
 	function recoverERC20(IERC20 tokenToRecover, address recipient) onlyOwner external
 	{
         require(recipient != address(0), "RECOVERER_ZERO_ADDRESS");
+        require(tokenToRecover != tokenReceiving, "Cannnot recover receiving token");
 		tokenToRecover.transfer(recipient, tokenToRecover.balanceOf(address(this)));
 	}
 }

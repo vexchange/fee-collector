@@ -8,7 +8,9 @@ contract DistributorTest is DSTest
 {
 	Distributor distributor; 
 	MintableERC20 tokenReceiving = new MintableERC20("Wrapped Vechain", "WVET");
+	MintableERC20 tokenToRecover = new MintableERC20("Recover Me", "RME");
 	address recipient1 = address(0xdD31a4a99748605ed2d574702b975EC320f4A561);
+	address recipient2 = address(0x1FEAeC7adEaC20b6f0178D03796293235774AEC6);
 
 	function setUp() public
 	{
@@ -63,5 +65,40 @@ contract DistributorTest is DSTest
 
 	function test_distribute_basic() public
 	{
+		// set allocation
+		DistributionAllocation[] memory daArray = new DistributionAllocation[](2);
+		DistributionAllocation memory da1 = DistributionAllocation(recipient1, 8000);
+		DistributionAllocation memory da2 = DistributionAllocation(recipient2, 2000);
+
+		daArray[0] = da1;
+		daArray[1] = da2;
+
+		distributor.setAllocation(daArray);
+
+		// transfer tokens to distributor
+		tokenReceiving.Mint(address(distributor), 100e18);
+		distributor.distribute();
+
+		// check that the recipients have got the tokens
+		assertEq(tokenReceiving.balanceOf(recipient1), 80e18);
+		assertEq(tokenReceiving.balanceOf(recipient2), 20e18);
+	}
+
+	function test_recover_basic() public
+	{
+		tokenToRecover.Mint(address(distributor), 100e18);
+		distributor.recoverERC20(tokenToRecover, recipient1);
+
+		assertEq(tokenToRecover.balanceOf(recipient1), 100e18);
+	}
+
+	function testFail_recover_zero_recoverer() public
+	{
+		distributor.recoverERC20(tokenToRecover, address(0));
+	}
+
+	function testFail_recover_receiving_token() public
+	{
+		distributor.recoverERC20(tokenReceiving, recipient1);
 	}
 }

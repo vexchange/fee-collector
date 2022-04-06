@@ -1,3 +1,4 @@
+/* solhint-disable func-name-mixedcase */
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity =0.8.11;
 

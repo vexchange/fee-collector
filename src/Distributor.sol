@@ -4,22 +4,25 @@ pragma solidity =0.8.11;
 import "@openzeppelin/access/Ownable.sol";
 import "@openzeppelin/interfaces/IERC20.sol";
 
-struct DistributionAllocation
+/// @param recipient The address to receive the share of incomingToken
+/// @param weight The share of incoming tokens in basis points
+/// @dev The sum of all weights should be BASIS_POINTS_MAX
+struct Allocation
 {
     address recipient;
-    uint16 basisPoints;
+    uint16 weight;
 }
 
 contract Distributor is Ownable
 {
     uint16 public constant BASIS_POINTS_MAX = 10000;
 
-    IERC20 public immutable tokenReceiving;
-    DistributionAllocation[] public allocations;
+    IERC20 public immutable incomingToken;
+    Allocation[] public allocations;
 
-    constructor(IERC20 _tokenReceiving)
+    constructor(IERC20 aIncomingToken)
     {
-        tokenReceiving = _tokenReceiving;
+        incomingToken = aIncomingToken;
     }
 
     function getAllocationsLength() external view returns (uint256)
@@ -27,27 +30,16 @@ contract Distributor is Ownable
         return allocations.length;
     }
 
-    function getAllocation(uint256 index) external view returns (DistributionAllocation memory)
+    function getAllocation(uint256 aIndex) external view returns (Allocation memory)
     {
-        return allocations[index];
+        return allocations[aIndex];
     }
 
-    function distribute() external
+    function sumWeights(Allocation[] memory aAllocations) internal pure returns (uint256 lSum)
     {
-        uint256 tokenBalance = tokenReceiving.balanceOf(address(this));
-        for (uint256 i = 0; i < allocations.length; ++i)
-        {
-            uint256 amountToTransfer = tokenBalance * allocations[i].basisPoints / BASIS_POINTS_MAX;
-            tokenReceiving.transfer(allocations[i].recipient, amountToTransfer);
-        }
-    }
-
-    function sumPercentage(DistributionAllocation[] memory allocationsToCalculate) internal pure returns (uint256 sum)
-    {
-        sum = 0;
-        for(uint256 i = 0; i < allocationsToCalculate.length; ++i)
-        {
-            sum += allocationsToCalculate[i].basisPoints;
+        lSum = 0;
+        for(uint256 i = 0; i < aAllocations.length; ++i) {
+            lSum += aAllocations[i].weight;
         }
     }
 
@@ -56,40 +48,47 @@ contract Distributor is Ownable
         return a < b ? a : b;
     }
 
-    function setAllocation(DistributionAllocation[] calldata newAllocations) onlyOwner external
+    function setAllocations(Allocation[] calldata aAllocations) external onlyOwner 
     {
-        require(sumPercentage(newAllocations) == BASIS_POINTS_MAX, "Provided allocations do not sum to 100");
+        require(sumWeights(aAllocations) == BASIS_POINTS_MAX, "allocations do not sum to 100");
 
-        uint256 lMinArrayLength = min(allocations.length, newAllocations.length);
+        uint256 lMinArrayLength = min(allocations.length, aAllocations.length);
 
         // 1. overwrite existing entries
-        for (uint256 i = 0; i < lMinArrayLength; ++i)
-        {
-            allocations[i] = newAllocations[i];
+        for (uint256 i = 0; i < lMinArrayLength; ++i) {
+            allocations[i] = aAllocations[i];
         }
 
-        // 2. grow array by new entries
-        if (newAllocations.length > allocations.length)
-        {
-            for (uint256 i = allocations.length; i < newAllocations.length; ++i)
-            {
-                allocations.push(newAllocations[i]);
+        // 2. grow/shink array to accomodate remainder
+        if (aAllocations.length > allocations.length) {
+            for (uint256 i = allocations.length; i < aAllocations.length; ++i) {
+                allocations.push(aAllocations[i]);
             }
         }
-        else 
-        {
-            uint256 lEntriesToPop = allocations.length - newAllocations.length;
-            for (uint256 i = 0; i < lEntriesToPop; ++i) 
-            {
+        else {
+            uint256 lEntriesToPop = allocations.length - aAllocations.length;
+            for (uint256 i = 0; i < lEntriesToPop; ++i) {
                 allocations.pop();
             }
         }
     }
 
-    function recoverERC20(IERC20 tokenToRecover, address recipient) onlyOwner external
+    function recoverToken(IERC20 aToken, address aRecipient) external onlyOwner 
     {
-        require(recipient != address(0), "RECOVERER_ZERO_ADDRESS");
-        require(tokenToRecover != tokenReceiving, "Cannnot recover receiving token");
-        tokenToRecover.transfer(recipient, tokenToRecover.balanceOf(address(this)));
+        require(aRecipient != address(0), "recover zero address");
+        require(aToken != incomingToken, "cannnot recover incoming token");
+
+        aToken.transfer(aRecipient, aToken.balanceOf(address(this)));
+    }
+
+    function distribute() external
+    {
+        uint256 lTokenBalance = incomingToken.balanceOf(address(this));
+
+        for (uint256 i = 0; i < allocations.length; ++i) {
+            uint256 lAmountToTransfer = lTokenBalance * allocations[i].weight / BASIS_POINTS_MAX;
+
+            incomingToken.transfer(allocations[i].recipient, lAmountToTransfer);
+        }
     }
 }

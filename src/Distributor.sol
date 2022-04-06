@@ -7,16 +7,15 @@ import "@openzeppelin/interfaces/IERC20.sol";
 struct DistributionAllocation
 {
 	address recipient;
-	// 0 - BASIS_POINTS_MAX
 	uint weightInBasisPoints;
 }
 
-interface DistributorInterface
+interface IDistributorInterface
 {
 	function distribute() external;
 }
 
-contract Distributor is Ownable, DistributorInterface
+contract Distributor is Ownable, IDistributorInterface
 {
 	IERC20 public immutable tokenReceiving;
 	DistributionAllocation[] public allocations;

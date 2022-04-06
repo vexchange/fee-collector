@@ -7,7 +7,7 @@ import "@openzeppelin/interfaces/IERC20.sol";
 struct DistributionAllocation
 {
 	address recipient;
-	// 0 - 10000
+	// 0 - BASIS_POINTS_MAX
 	uint weightInBasisPoints;
 }
 
@@ -25,6 +25,16 @@ contract Distributor is Ownable, DistributorInterface
 	constructor(IERC20 _tokenReceiving)
 	{
 		tokenReceiving = _tokenReceiving;
+	}
+
+	function getAllocationsLength() external view returns (uint256)
+	{ 
+		return allocations.length;
+	}
+
+	function getAllocation(uint index) external view returns (DistributionAllocation memory)
+	{
+		return allocations[index];
 	}
 
 	function distribute() external
@@ -48,10 +58,10 @@ contract Distributor is Ownable, DistributorInterface
 
 	function min(uint256 a, uint256 b) internal pure returns (uint256)
 	{
-		return a > b ? a : b;
+		return a < b ? a : b;
 	}
 
-	function changeAllocation(DistributionAllocation[] calldata newAllocations) onlyOwner external
+	function setAllocation(DistributionAllocation[] calldata newAllocations) onlyOwner external
 	{
 		require(sumPercentage(newAllocations) == BASIS_POINTS_MAX, "Provided allocations do not sum to 100");
 

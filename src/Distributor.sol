@@ -22,8 +22,6 @@ contract Distributor is Ownable, DistributorInterface
 	DistributionAllocation[] public allocations;
 	uint public constant BASIS_POINTS_MAX = 10000;
 
-	event AllocationsChanged();
-
 	constructor(IERC20 _tokenReceiving)
 	{
 		tokenReceiving = _tokenReceiving;
@@ -53,34 +51,34 @@ contract Distributor is Ownable, DistributorInterface
 		return a > b ? a : b;
 	}
 
-	function changeAllocation(DistributionAllocation[] calldata newAllocation) onlyOwner external
+	function changeAllocation(DistributionAllocation[] calldata newAllocations) onlyOwner external
 	{
-		require(sumPercentage(newAllocation) == BASIS_POINTS_MAX, "Provided allocations do not sum to 100");
+		require(sumPercentage(newAllocations) == BASIS_POINTS_MAX, "Provided allocations do not sum to 100");
 
-		// DistributionAllocation[] storage newArray = [];
-
-		uint256 lMinArrayLength = min(allocations.length, newAllocation.length);
+		uint256 lMinArrayLength = min(allocations.length, newAllocations.length);
 
 		// 1. overwrite existing entries
 		for (uint256 i = 0; i < lMinArrayLength; ++i)
 		{
-			allocations[i] = newAllocation[i];
+			allocations[i] = newAllocations[i];
 		}
 
 		// 2. grow array by new entries
-		if (newAllocation.length > allocations.length) {
-			for (uint256 i = allocations.length; i < newAllocation.length; ++i)
+		if (newAllocations.length > allocations.length) 
+		{
+			for (uint256 i = allocations.length; i < newAllocations.length; ++i)
 			{
-				allocations.push(newAllocation[i]);
+				allocations.push(newAllocations[i]);
 			}
-		} else {
-			uint256 lEntriesToPop = allocations.length - newAllocation.length;
-			for (uint256 i = 0; i < lEntriesToPop; ++i) {
+		} 
+		else 
+		{
+			uint256 lEntriesToPop = allocations.length - newAllocations.length;
+			for (uint256 i = 0; i < lEntriesToPop; ++i) 
+			{
 				allocations.pop();
 			}
 		}
-
-		emit AllocationsChanged();
 	}
 
 	function recoverERC20(IERC20 tokenToRecover, address recipient) onlyOwner external

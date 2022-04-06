@@ -1,4 +1,5 @@
-pragma solidity =0.8.13;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity =0.8.11;
 
 import "@openzeppelin/access/Ownable.sol";
 import "@openzeppelin/interfaces/IERC20.sol";
@@ -10,7 +11,7 @@ struct DistributionAllocation
 	uint weightInBasisPoints;
 }
 
-interface DistributorInterface 
+interface DistributorInterface
 {
 	function distribute() external;
 }
@@ -23,15 +24,12 @@ contract Distributor is Ownable, DistributorInterface
 
 	event AllocationsChanged();
 
-	constructor(IERC20 _tokenReceiving,
-				DistributionAllocation[] memory _allocations)
+	constructor(IERC20 _tokenReceiving)
 	{
-		require(sumPercentage(_allocations) == BASIS_POINTS_MAX, "Provided allocations do not sum to 100");
 		tokenReceiving = _tokenReceiving;
-		allocations = _allocations;
 	}
 
-	function distribute() external 
+	function distribute() external
 	{
 		uint tokenBalance = tokenReceiving.balanceOf(address(this));
 		for (uint i = 0; i < allocations.length; ++i)
@@ -50,21 +48,38 @@ contract Distributor is Ownable, DistributorInterface
 		}
 	}
 
+	function min(uint256 a, uint256 b) internal pure returns (uint256)
+	{
+		return a > b ? a : b;
+	}
+
 	function changeAllocation(DistributionAllocation[] calldata newAllocation) onlyOwner external
-	{ 
+	{
 		require(sumPercentage(newAllocation) == BASIS_POINTS_MAX, "Provided allocations do not sum to 100");
 
 		// DistributionAllocation[] storage newArray = [];
 
-		for (uint i = 0; i < newAllocation.length; ++i)
+		uint256 lMinArrayLength = min(allocations.length, newAllocation.length);
+
+		// 1. overwrite existing entries
+		for (uint256 i = 0; i < lMinArrayLength; ++i)
 		{
-			address recipient = newAllocation[i].recipient;
-			allocations[i].recipient = recipient;
-			// allocations[i].weightInBasisPoints = newAllocation[i].weightInBasisPoints;
+			allocations[i] = newAllocation[i];
 		}
 
-		// allocations = newArray;
-		
+		// 2. grow array by new entries
+		if (newAllocation.length > allocations.length) {
+			for (uint256 i = allocations.length; i < newAllocation.length; ++i)
+			{
+				allocations.push(newAllocation[i]);
+			}
+		} else {
+			uint256 lEntriesToPop = allocations.length - newAllocation.length;
+			for (uint256 i = 0; i < lEntriesToPop; ++i) {
+				allocations.pop();
+			}
+		}
+
 		emit AllocationsChanged();
 	}
 

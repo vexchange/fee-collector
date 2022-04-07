@@ -61,8 +61,65 @@ contract DistributorTest is DSTest
         assertEq(distributor.getAllocation(1).weight, 2000);
     }
 
-    // todo: add tests that have varying before and after lengths of arrays
-    // to test the correct expansion and shrinkage of arrays
+    function testExpandAllocation() public 
+    {
+        // arrange 
+        Allocation[] memory daArray = new Allocation[](2);
+        Allocation memory da1 = Allocation(recipient1, 6000);
+        Allocation memory da2 = Allocation(recipient2, 4000);
+        daArray[0] = da1;
+        daArray[1] = da2;
+        distributor.setAllocations(daArray);
+
+        Allocation[] memory newDaArray = new Allocation[](5);
+        for (uint256 i = 0; i < 5; ++i)
+        {
+            newDaArray[i] = Allocation(recipient1, distributor.BASIS_POINTS_MAX() / 5);
+        }
+
+        // act
+        distributor.setAllocations(newDaArray);
+
+        // assert
+        assertEq(distributor.getAllocationsLength(), 5);
+    }
+
+    function testShrinkAllocation() public
+    {
+        // arrange
+        Allocation[] memory daArray = new Allocation[](10);
+        for (uint256 i = 0; i < 10; ++i)
+        {
+            daArray[i] = Allocation(recipient1, distributor.BASIS_POINTS_MAX() / 10);
+        }
+        distributor.setAllocations(daArray);
+        
+        Allocation[] memory newDaArray = new Allocation[](1);
+        newDaArray[0] = Allocation(recipient2, distributor.BASIS_POINTS_MAX());
+        
+        // act
+        distributor.setAllocations(newDaArray);
+
+        // assert
+        assertEq(distributor.getAllocationsLength(), 1);
+    }
+
+    function testShrinkAllocationToZero() public
+    {
+        // arrange
+        Allocation[] memory daArray = new Allocation[](10);
+        for (uint256 i = 0; i < 10; ++i)
+        {
+            daArray[i] = Allocation(recipient1, distributor.BASIS_POINTS_MAX() / 10);
+        }
+        distributor.setAllocations(daArray);
+        
+        Allocation[] memory newDaArray = new Allocation[](0);
+
+        // act & assert
+        vm.expectRevert("allocations do not sum to 10000");
+        distributor.setAllocations(newDaArray);
+    }
 
 
     function testTotalMoreThan10000BasisPoints() public
@@ -107,15 +164,27 @@ contract DistributorTest is DSTest
         daArray[1] = da2;
 
         distributor.setAllocations(daArray);
+        incomingToken.mint(address(distributor), 100e18);
 
         // act
-        incomingToken.mint(address(distributor), 100e18);
         distributor.distribute();
 
         // assert
         assertEq(incomingToken.balanceOf(recipient1), 80e18);
         assertEq(incomingToken.balanceOf(recipient2), 20e18);
         assertEq(incomingToken.balanceOf(address(distributor)), 0);
+    }
+
+    function testDistributeBeforeAllocation() public
+    {
+        // arrange
+        incomingToken.mint(address(distributor), 100e18);
+
+        // act
+        distributor.distribute();
+
+        // assert
+        assertEq(incomingToken.balanceOf(address(distributor)), 100e18);
     }
 
     function testRecoverBasic() public

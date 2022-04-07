@@ -1,8 +1,8 @@
 {
   "scripts": {
+    "reinstall": "rm -rf node_modules package-lock.json && npm install",
     "mdlint": "markdownlint . --fix",
     "mdlint:check": "markdownlint .",
-    "reinstall": "rm -rf node_modules package-lock.json && npm install",
     "prettier": "prettier --write '**/*.json'",
     "prettier:list": "prettier --list-different '**/*.json'",
     "prettier:check": "prettier --check '**/*.json'",

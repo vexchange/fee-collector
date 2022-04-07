@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 /* solhint-disable not-rely-on-time */
+/* solhint-disable func-name-mixedcase */
+/* solhint-disable var-name-mixedcase */
+/* solhint-disable reason-string */
 pragma solidity =0.8.11;
 
 import "@openzeppelin/access/Ownable.sol";

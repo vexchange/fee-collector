@@ -10,78 +10,76 @@ contract DistributorTest is DSTest
 {
     Vm private vm = Vm(HEVM_ADDRESS);
 
-    Distributor private distributor; 
-    MintableERC20 private incomingToken = new MintableERC20("Wrapped Vechain", "WVET");
-    MintableERC20 private tokenToRecover = new MintableERC20("Recover Me", "RME");
-    address private recipient1 = address(1);
-    address private recipient2 = address(2);
+    Distributor private mDistributor; 
+    MintableERC20 private mIncomingToken = new MintableERC20("Wrapped Vechain", "WVET");
+    MintableERC20 private mTokenToRecover = new MintableERC20("Recover Me", "RME");
+    address private mRecipient1 = address(1);
+    address private mRecipient2 = address(2);
 
     function setUp() public
     {
-        distributor = new Distributor(incomingToken);
+        mDistributor = new Distributor(mIncomingToken);
     }
 
     function testIncomingToken() public
     {
         // assert
-        assertEq(address(distributor.incomingToken()), address(incomingToken));
+        assertEq(address(mDistributor.incomingToken()), address(mIncomingToken));
     }
 
     function testSingleCorrectAllocaation() public
     {
         // arrange
         Allocation[] memory daArray = new Allocation[](1);
-        Allocation memory da = Allocation(recipient1, distributor.BASIS_POINTS_MAX());
+        Allocation memory da = Allocation(mRecipient1, mDistributor.BASIS_POINTS_MAX());
 
         daArray[0] = da;
 
         // act
-        distributor.setAllocations(daArray);
+        mDistributor.setAllocations(daArray);
 
         // assert
-        assertEq(distributor.getAllocationsLength(), 1);
-        assertEq(distributor.getAllocation(0).weight, distributor.BASIS_POINTS_MAX());
+        assertEq(mDistributor.getAllocationsLength(), 1);
+        assertEq(mDistributor.getAllocation(0).weight, mDistributor.BASIS_POINTS_MAX());
     }   
 
     function testTwoCorrectAllocation() public
     {
         // arrange 
         Allocation[] memory daArray = new Allocation[](2);
-        Allocation memory da1 = Allocation(recipient1, 8000);
-        Allocation memory da2 = Allocation(recipient2, 2000);
+        Allocation memory da1 = Allocation(mRecipient1, 8000);
+        Allocation memory da2 = Allocation(mRecipient2, 2000);
 
         daArray[0] = da1;
         daArray[1] = da2;
 
         // act
-        distributor.setAllocations(daArray);
+        mDistributor.setAllocations(daArray);
 
         // assert
-        assertEq(distributor.getAllocation(0).weight, 8000);
-        assertEq(distributor.getAllocation(1).weight, 2000);
+        assertEq(mDistributor.getAllocation(0).weight, 8000);
+        assertEq(mDistributor.getAllocation(1).weight, 2000);
     }
 
     function testExpandAllocation() public 
     {
         // arrange 
-        Allocation[] memory daArray = new Allocation[](2);
-        Allocation memory da1 = Allocation(recipient1, 6000);
-        Allocation memory da2 = Allocation(recipient2, 4000);
-        daArray[0] = da1;
-        daArray[1] = da2;
-        distributor.setAllocations(daArray);
+        Allocation[] memory lAllocations1 = new Allocation[](2);
+        lAllocations1[0] = Allocation(mRecipient1, 6000);
+        lAllocations1[1] = Allocation(mRecipient2, 4000);
+        mDistributor.setAllocations(lAllocations1);
 
-        Allocation[] memory newDaArray = new Allocation[](5);
+        Allocation[] memory lAllocations2 = new Allocation[](5);
         for (uint256 i = 0; i < 5; ++i)
         {
-            newDaArray[i] = Allocation(recipient1, distributor.BASIS_POINTS_MAX() / 5);
+            lAllocations2[i] = Allocation(mRecipient1, mDistributor.BASIS_POINTS_MAX() / 5);
         }
 
         // act
-        distributor.setAllocations(newDaArray);
+        mDistributor.setAllocations(lAllocations2);
 
         // assert
-        assertEq(distributor.getAllocationsLength(), 5);
+        assertEq(mDistributor.getAllocationsLength(), 5);
     }
 
     function testShrinkAllocation() public
@@ -90,18 +88,18 @@ contract DistributorTest is DSTest
         Allocation[] memory daArray = new Allocation[](10);
         for (uint256 i = 0; i < 10; ++i)
         {
-            daArray[i] = Allocation(recipient1, distributor.BASIS_POINTS_MAX() / 10);
+            daArray[i] = Allocation(mRecipient1, mDistributor.BASIS_POINTS_MAX() / 10);
         }
-        distributor.setAllocations(daArray);
+        mDistributor.setAllocations(daArray);
         
         Allocation[] memory newDaArray = new Allocation[](1);
-        newDaArray[0] = Allocation(recipient2, distributor.BASIS_POINTS_MAX());
+        newDaArray[0] = Allocation(mRecipient2, mDistributor.BASIS_POINTS_MAX());
         
         // act
-        distributor.setAllocations(newDaArray);
+        mDistributor.setAllocations(newDaArray);
 
         // assert
-        assertEq(distributor.getAllocationsLength(), 1);
+        assertEq(mDistributor.getAllocationsLength(), 1);
     }
 
     function testShrinkAllocationToZero() public
@@ -110,39 +108,39 @@ contract DistributorTest is DSTest
         Allocation[] memory daArray = new Allocation[](10);
         for (uint256 i = 0; i < 10; ++i)
         {
-            daArray[i] = Allocation(recipient1, distributor.BASIS_POINTS_MAX() / 10);
+            daArray[i] = Allocation(mRecipient1, mDistributor.BASIS_POINTS_MAX() / 10);
         }
-        distributor.setAllocations(daArray);
+        mDistributor.setAllocations(daArray);
         
         Allocation[] memory newDaArray = new Allocation[](0);
 
         // act & assert
         vm.expectRevert("allocations do not sum to 10000");
-        distributor.setAllocations(newDaArray);
+        mDistributor.setAllocations(newDaArray);
     }
 
 
-    function testTotalMoreThan10000BasisPoints() public
+    function testAllocationsExceedMax() public
     {
         // arrange
         Allocation[] memory daArray = new Allocation[](2);
 
-        Allocation memory da1 = Allocation(recipient1, 5000);
-        Allocation memory da2 = Allocation(recipient2, 8000);
+        Allocation memory da1 = Allocation(mRecipient1, 5000);
+        Allocation memory da2 = Allocation(mRecipient2, 8000);
 
         daArray[0] = da1;
         daArray[1] = da2;
 
         // act & assert
         vm.expectRevert("allocations do not sum to 10000");
-        distributor.setAllocations(daArray);
+        mDistributor.setAllocations(daArray);
     }
 
     function testNotOwner() public
     {
         // arrange
         Allocation[] memory daArray = new Allocation[](1);
-        Allocation memory da = Allocation(recipient1, distributor.BASIS_POINTS_MAX());
+        Allocation memory da = Allocation(mRecipient1, mDistributor.BASIS_POINTS_MAX());
 
         daArray[0] = da;
         
@@ -150,66 +148,66 @@ contract DistributorTest is DSTest
 
         // act & assert
         vm.expectRevert("Ownable: caller is not the owner");
-        distributor.setAllocations(daArray);
+        mDistributor.setAllocations(daArray);
     }
 
     function testDistributeBasic() public
     {
         // arrange
         Allocation[] memory daArray = new Allocation[](2);
-        Allocation memory da1 = Allocation(recipient1, 8000);
-        Allocation memory da2 = Allocation(recipient2, 2000);
+        Allocation memory da1 = Allocation(mRecipient1, 8000);
+        Allocation memory da2 = Allocation(mRecipient2, 2000);
 
         daArray[0] = da1;
         daArray[1] = da2;
 
-        distributor.setAllocations(daArray);
-        incomingToken.mint(address(distributor), 100e18);
+        mDistributor.setAllocations(daArray);
+        mIncomingToken.mint(address(mDistributor), 100e18);
 
         // act
-        distributor.distribute();
+        mDistributor.distribute();
 
         // assert
-        assertEq(incomingToken.balanceOf(recipient1), 80e18);
-        assertEq(incomingToken.balanceOf(recipient2), 20e18);
-        assertEq(incomingToken.balanceOf(address(distributor)), 0);
+        assertEq(mIncomingToken.balanceOf(mRecipient1), 80e18);
+        assertEq(mIncomingToken.balanceOf(mRecipient2), 20e18);
+        assertEq(mIncomingToken.balanceOf(address(mDistributor)), 0);
     }
 
     function testDistributeBeforeAllocation() public
     {
         // arrange
-        incomingToken.mint(address(distributor), 100e18);
+        mIncomingToken.mint(address(mDistributor), 100e18);
 
         // act
-        distributor.distribute();
+        mDistributor.distribute();
 
         // assert
-        assertEq(incomingToken.balanceOf(address(distributor)), 100e18);
+        assertEq(mIncomingToken.balanceOf(address(mDistributor)), 100e18);
     }
 
     function testRecoverBasic() public
     {
         // arrange
-        tokenToRecover.mint(address(distributor), 100e18);
+        mTokenToRecover.mint(address(mDistributor), 100e18);
 
         // act
-        distributor.recoverToken(tokenToRecover, recipient1);
+        mDistributor.recoverToken(mTokenToRecover, mRecipient1);
 
         // assert
-        assertEq(tokenToRecover.balanceOf(recipient1), 100e18);
+        assertEq(mTokenToRecover.balanceOf(mRecipient1), 100e18);
     }
 
     function testRecoverZeroRecoverer() public
     {
         // act & assert
         vm.expectRevert("recover zero address");
-        distributor.recoverToken(tokenToRecover, address(0));
+        mDistributor.recoverToken(mTokenToRecover, address(0));
     }
 
     function testRecoverReceivingToken() public
     {
         // act & assert
         vm.expectRevert("cannnot recover incoming token");
-        distributor.recoverToken(incomingToken, recipient1);
+        mDistributor.recoverToken(mIncomingToken, mRecipient1);
     }
 }

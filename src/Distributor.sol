@@ -35,11 +35,11 @@ contract Distributor is Ownable
         return allocations[aIndex];
     }
 
-    function sumWeights(Allocation[] memory aAllocations) internal pure returns (uint256 lSum)
+    function sumWeights(Allocation[] memory aAllocations) internal pure returns (uint256 rSum)
     {
-        lSum = 0;
+        rSum = 0;
         for(uint256 i = 0; i < aAllocations.length; ++i) {
-            lSum += aAllocations[i].weight;
+            rSum += aAllocations[i].weight;
         }
     }
 

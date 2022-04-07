@@ -119,7 +119,7 @@ contract FeeCollectorTest is DSTest
     function test_withdraw() public
     {
         // sanity
-        mExternalToken.Mint(address(mFeeCollector), 10e18);
+        mExternalToken.mint(address(mFeeCollector), 10e18);
         assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 10e18);
 
         // act
@@ -131,13 +131,13 @@ contract FeeCollectorTest is DSTest
 
     function testFail_disable_sales() public
     {
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
         mTestPair.mint(address(1));
 
         // sanity
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
         mTestPair.mint(address(mFeeCollector));
         mFeeCollector.BreakApartLP(mTestPair);
         assertEq(mTestPair.balanceOf(address(mFeeCollector)),      0);
@@ -156,8 +156,8 @@ contract FeeCollectorTest is DSTest
     function testFail_disable_pair() public
     {
         // arrange
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
         mTestPair.mint(address(mFeeCollector));
 
         // act
@@ -167,8 +167,8 @@ contract FeeCollectorTest is DSTest
 
     function test_withdraw_lp() public
     {
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
 
         // sanity
         uint256 lLiquidityMinted = mTestPair.mint(address(mFeeCollector));
@@ -187,13 +187,13 @@ contract FeeCollectorTest is DSTest
 
     function test_sell_holding() public
     {
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
         mTestPair.mint(address(1));
 
         // sanity
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
         mTestPair.mint(address(mFeeCollector));
         mFeeCollector.BreakApartLP(mTestPair);
         assertEq(mTestPair.balanceOf(address(mFeeCollector)),      0);
@@ -218,13 +218,13 @@ contract FeeCollectorTest is DSTest
 
     function testFail_sell_holding() public
     {
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
         mTestPair.mint(address(1));
 
         // sanity
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
         mTestPair.mint(address(mFeeCollector));
         mFeeCollector.BreakApartLP(mTestPair);
 
@@ -234,8 +234,8 @@ contract FeeCollectorTest is DSTest
 
     function test_sweep_holding() public
     {
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
 
         // sanity
         mTestPair.mint(address(mFeeCollector));
@@ -259,13 +259,13 @@ contract FeeCollectorTest is DSTest
 
     function test_sell_and_sweep_holding() public
     {
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
         mTestPair.mint(address(1));
 
         // sanity
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
         mTestPair.mint(address(mFeeCollector));
         mFeeCollector.BreakApartLP(mTestPair);
         assertEq(mTestPair.balanceOf(address(mFeeCollector)),      0);
@@ -295,13 +295,13 @@ contract FeeCollectorTest is DSTest
             address(lOtherToken)
         ));
 
-        lOtherToken.Mint(address(lOtherPair), 2e18);  // this is a more expensive token
-        mExternalToken.Mint(address(lOtherPair), 50e18);
+        lOtherToken.mint(address(lOtherPair), 2e18);  // this is a more expensive token
+        mExternalToken.mint(address(lOtherPair), 50e18);
         lOtherPair.mint(address(1));
 
         // sanity
-        lOtherToken.Mint(address(lOtherPair), 2e18);
-        mExternalToken.Mint(address(lOtherPair), 50e18);
+        lOtherToken.mint(address(lOtherPair), 2e18);
+        mExternalToken.mint(address(lOtherPair), 50e18);
         lOtherPair.mint(address(mFeeCollector));
         mFeeCollector.BreakApartLP(lOtherPair);
         assertEq(lOtherPair.balanceOf(address(mFeeCollector)),     0);
@@ -329,13 +329,13 @@ contract FeeCollectorTest is DSTest
 
     function testFail_swap_too_quickly() public
     {
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
         mTestPair.mint(address(1));
 
         // sanity
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
         mTestPair.mint(address(mFeeCollector));
         mFeeCollector.BreakApartLP(mTestPair);
         assertEq(mTestPair.balanceOf(address(mFeeCollector)),      0);
@@ -357,19 +357,19 @@ contract FeeCollectorTest is DSTest
         ));
 
         // pair 1 with 2 other & 50 external
-        lOtherToken.Mint(address(lOtherPair), 2e18);
-        mExternalToken.Mint(address(lOtherPair), 50e18);
+        lOtherToken.mint(address(lOtherPair), 2e18);
+        mExternalToken.mint(address(lOtherPair), 50e18);
         lOtherPair.mint(address(1));
 
         // pair 2 with 50 desired & 100 external
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
         mTestPair.mint(address(1));
 
         // sanity
         // pair 1
-        lOtherToken.Mint(address(lOtherPair), 2e18);
-        mExternalToken.Mint(address(lOtherPair), 50e18);
+        lOtherToken.mint(address(lOtherPair), 2e18);
+        mExternalToken.mint(address(lOtherPair), 50e18);
         lOtherPair.mint(address(mFeeCollector));
         mFeeCollector.BreakApartLP(lOtherPair);
         assertEq(lOtherPair.balanceOf(address(mFeeCollector)),     0);
@@ -377,8 +377,8 @@ contract FeeCollectorTest is DSTest
         assertEq(mExternalToken.balanceOf(address(mFeeCollector)), 50e18);
 
         // pair 2
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
         mTestPair.mint(address(mFeeCollector));
         mFeeCollector.BreakApartLP(mTestPair);
         assertEq(mTestPair.balanceOf(address(mFeeCollector)),      0);
@@ -423,13 +423,13 @@ contract FeeCollectorTest is DSTest
 
     function test_sell_holding_no_platform_fee() public
     {
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
         mTestPair.mint(address(1));
 
         // sanity
-        mExternalToken.Mint(address(mTestPair), 100e18);
-        mDesiredToken.Mint(address(mTestPair), 50e18);
+        mExternalToken.mint(address(mTestPair), 100e18);
+        mDesiredToken.mint(address(mTestPair), 50e18);
         mTestPair.mint(address(mFeeCollector));
         mFeeCollector.BreakApartLP(mTestPair);
         assertEq(mTestPair.balanceOf(address(mFeeCollector)),      0);
@@ -455,13 +455,13 @@ contract FeeCollectorTest is DSTest
     function test_sell_profitable() public
     {
         // create new pool with 10x and 10y
-        mExternalToken.Mint(address(mTestPair), 10e18);
-        mDesiredToken.Mint(address(mTestPair), 10e18);
+        mExternalToken.mint(address(mTestPair), 10e18);
+        mDesiredToken.mint(address(mTestPair), 10e18);
         mTestPair.mint(address(1));
 
         // give FeeCollector 25bips * 10 of y
         uint256 lAmountToSell = 0.025e18;
-        mExternalToken.Mint(address(mFeeCollector), lAmountToSell);
+        mExternalToken.mint(address(mFeeCollector), lAmountToSell);
 
         // act
         mFeeCollector.SellHolding(mExternalToken);
@@ -488,13 +488,13 @@ contract FeeCollectorTest is DSTest
         ));
 
         // create new pool with 10x and 10y
-        mExternalToken.Mint(address(lOtherPair), 10e18);
-        lOtherToken.Mint(address(lOtherPair), 2.5e18);
+        mExternalToken.mint(address(lOtherPair), 10e18);
+        lOtherToken.mint(address(lOtherPair), 2.5e18);
         lOtherPair.mint(address(1));
 
         // give FeeCollector 25bips * 10 of y
         uint256 lAmountToSell = 0.025e18;
-        mExternalToken.Mint(address(mFeeCollector), lAmountToSell);
+        mExternalToken.mint(address(mFeeCollector), lAmountToSell);
 
         // act
         mFeeCollector.UpdateConfig(
@@ -518,13 +518,13 @@ contract FeeCollectorTest is DSTest
     function test_sell_profitable_no_helper() public
     {
         // create new pool with 10x and 10y
-        mExternalToken.Mint(address(mTestPair), 10e18);
-        mDesiredToken.Mint(address(mTestPair), 10e18);
+        mExternalToken.mint(address(mTestPair), 10e18);
+        mDesiredToken.mint(address(mTestPair), 10e18);
         mTestPair.mint(address(1));
 
         // give FeeCollector 25bips * 10 of y
         uint256 lAmountToSell = 0.025e18;
-        mExternalToken.Mint(address(mFeeCollector), lAmountToSell);
+        mExternalToken.mint(address(mFeeCollector), lAmountToSell);
 
         // initiate sale, expecting all to be sold for roughly equivalent amount of y
         mFeeCollector.SellHolding(mExternalToken);
@@ -555,13 +555,13 @@ contract FeeCollectorTest is DSTest
         ));
 
         // mint initial liquidity and send to locked addr
-        lOtherToken.Mint(address(lOtherPair), 2e18);
-        mExternalToken.Mint(address(lOtherPair), 50e18);
+        lOtherToken.mint(address(lOtherPair), 2e18);
+        mExternalToken.mint(address(lOtherPair), 50e18);
         lOtherPair.mint(address(1));
 
         // give the mFeeCollector some LP tokens
-        lOtherToken.Mint(address(lOtherPair), 2e18);
-        mExternalToken.Mint(address(lOtherPair), 50e18);
+        lOtherToken.mint(address(lOtherPair), 2e18);
+        mExternalToken.mint(address(lOtherPair), 50e18);
         lOtherPair.mint(address(mFeeCollector));
         
         // sanity
@@ -587,13 +587,13 @@ contract FeeCollectorTest is DSTest
         ));
 
         // mint initial liquidity and send to locked addr
-        lOtherToken.Mint(address(lOtherPair), 2e18);
-        mExternalToken.Mint(address(lOtherPair), 50e18);
+        lOtherToken.mint(address(lOtherPair), 2e18);
+        mExternalToken.mint(address(lOtherPair), 50e18);
         lOtherPair.mint(address(1));
 
         // give the mFeeCollector some LP tokens
-        lOtherToken.Mint(address(lOtherPair), 2e18);
-        mExternalToken.Mint(address(lOtherPair), 50e18);
+        lOtherToken.mint(address(lOtherPair), 2e18);
+        mExternalToken.mint(address(lOtherPair), 50e18);
         lOtherPair.mint(address(mFeeCollector));
 
         // act
@@ -604,8 +604,8 @@ contract FeeCollectorTest is DSTest
     function test_sell_amount_is_optimal(uint256 aSellAmount) public
     {
         // create new pool with 10x and 10y
-        mExternalToken.Mint(address(mTestPair), 10e18);
-        mDesiredToken.Mint(address(mTestPair), 10e18);
+        mExternalToken.mint(address(mTestPair), 10e18);
+        mDesiredToken.mint(address(mTestPair), 10e18);
         mTestPair.mint(address(1));
 
         // give FeeCollector 25bips * 10 of y
@@ -620,7 +620,7 @@ contract FeeCollectorTest is DSTest
         );
         if (lExpectedOut == 0) { return; }
 
-        mExternalToken.Mint(address(mFeeCollector), aSellAmount);
+        mExternalToken.mint(address(mFeeCollector), aSellAmount);
 
         // act
         mFeeCollector.SellHolding(mExternalToken);

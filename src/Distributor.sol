@@ -50,7 +50,7 @@ contract Distributor is Ownable
 
     function setAllocations(Allocation[] calldata aAllocations) external onlyOwner 
     {
-        require(sumWeights(aAllocations) == BASIS_POINTS_MAX, "allocations do not sum to 100");
+        require(sumWeights(aAllocations) == BASIS_POINTS_MAX, "allocations do not sum to 10000");
 
         uint256 lMinArrayLength = min(allocations.length, aAllocations.length);
 

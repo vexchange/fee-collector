@@ -77,7 +77,7 @@ contract DistributorTest is DSTest
         daArray[1] = da2;
 
         // act & assert
-        vm.expectRevert("provided allocations do not sum to 100");
+        vm.expectRevert("allocations do not sum to 10000");
         distributor.setAllocations(daArray);
     }
 
@@ -109,7 +109,7 @@ contract DistributorTest is DSTest
         distributor.setAllocations(daArray);
 
         // act
-        incomingToken.Mint(address(distributor), 100e18);
+        incomingToken.mint(address(distributor), 100e18);
         distributor.distribute();
 
         // assert
@@ -121,7 +121,7 @@ contract DistributorTest is DSTest
     function testRecoverBasic() public
     {
         // arrange
-        tokenToRecover.Mint(address(distributor), 100e18);
+        tokenToRecover.mint(address(distributor), 100e18);
 
         // act
         distributor.recoverToken(tokenToRecover, recipient1);

@@ -26,7 +26,9 @@
     "axios": "^0.25.0",
     "dotenv": "^14.2.0",
     "markdownlint-cli": "0.30.0",
-    "readline-sync": "^1.4.10"
+    "readline-sync": "1.4.10",
+    "thorify": "1.6.2",
+    "web3": "1.7.3"
   },
   "type": "module"
 }

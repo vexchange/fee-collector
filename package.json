@@ -27,8 +27,7 @@
     "dotenv": "^14.2.0",
     "markdownlint-cli": "0.30.0",
     "readline-sync": "1.4.10",
-    "thor-devkit": "2.0.5",
-    "web3": "1.7.3"
+    "thor-devkit": "2.0.5"
   },
   "type": "module"
 }

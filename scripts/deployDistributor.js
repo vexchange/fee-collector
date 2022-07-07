@@ -1,6 +1,6 @@
 import { Framework } from "@vechain/connex-framework";
 import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-driver";
-import { DISTRIBUTOR_ADDRESS, PRIVATE_KEY } from "./config.js";
+import { PRIVATE_KEY } from "./config.js";
 import { abi } from "thor-devkit";
 import config from "./deploymentConfig.js";
 import readlineSync from "readline-sync";
@@ -11,18 +11,6 @@ const __dirname = path.resolve();
 const DistributorContract = JSON.parse(
   fs.readFileSync(path.join(__dirname, config.pathToDistributorJson), "utf-8")
 );
-
-let network = null;
-if (process.argv.l0ength < 3) {
-  console.error("Usage: node scripts/deployDistributor [mainnet|testnet]");
-  process.exit(1);
-}
-
-network = config.network[process.argv[2]];
-if (network === undefined) {
-  console.error("Invalid network specified");
-  process.exit(1);
-}
 
 /* ALLOCATIONS */
 const allocations = [
@@ -75,10 +63,20 @@ const DISTRIBUTOR_SETALLOCATIONS_ABI = {
   type: "function",
 };
 
+let network = null;
+if (process.argv.l0ength < 3) {
+  console.error("Usage: node scripts/deployDistributor [mainnet|testnet]");
+  process.exit(1);
+}
+
+network = config.network[process.argv[2]];
+if (network === undefined) {
+  console.error("Invalid network specified");
+  process.exit(1);
+}
+
 (async () => {
   try {
-    console.log("Attempting to deploy contract:", config.pathToDistributorJson);
-
     if (network.name == "mainnet") {
       let input = readlineSync.question(
         "Confirm you want to deploy this on the MAINNET? (y/n) "
@@ -86,12 +84,27 @@ const DISTRIBUTOR_SETALLOCATIONS_ABI = {
       if (input != "y") process.exit(1);
     }
 
-    let receipt = null;
     const lWallet = new SimpleWallet();
     lWallet.import(PRIVATE_KEY);
     const lNet = new SimpleNet(network.rpcUrl);
     const lDriver = await Driver.connect(lNet, lWallet);
     const connex = new Framework(lDriver);
+
+    let receipt = await deployContract(connex);
+    await configureDistributorAllocations(connex, receipt);
+    // await renounceMastership(transactionReceipt.contractAddress);
+  } catch (error) {
+    console.log("Deployment failed with:", error.message);
+  }
+
+  process.exit(1);
+})();
+
+const deployContract = async (connex) => {
+  return new Promise(async (resolve) => {
+    console.log(
+      `Deploying distributor contract(${config.pathToDistributorJson})...`
+    );
     const coder = new abi.Function(DISTRIBUTOR_CONSTRUCTOR_ABI);
     const data =
       DistributorContract.bytecode.object +
@@ -107,30 +120,32 @@ const DISTRIBUTOR_SETALLOCATIONS_ABI = {
       resContractDeployment.txid
     );
 
+    let receipt = null;
     while (!receipt) {
       await connex.thor.ticker().next();
       receipt = await contractDeploymentTransaction.getReceipt();
     }
 
-    console.log(receipt);
-
     if (receipt.reverted) {
-      console.log("Failed to deploy contract");
+      console.log("Failed to deploy distributor contract");
       process.exit(1);
     }
 
-    const lFeeCollectorContract = connex.thor.account(
+    console.log(receipt);
+    resolve(receipt);
+  });
+};
+
+const configureDistributorAllocations = async (connex, receipt) => {
+  return new Promise(async (resolve) => {
+    console.log(`Configuring distributor allocations...`);
+    const distributorContract = connex.thor.account(
       receipt.outputs[0].contractAddress
     );
-    const lMethod = lFeeCollectorContract.method(
-      DISTRIBUTOR_SETALLOCATIONS_ABI
-    );
-    const lClause = lMethod.asClause(allocations);
-    console.log(lClause);
+    const method = distributorContract.method(DISTRIBUTOR_SETALLOCATIONS_ABI);
     const resSetAllocations = await connex.vendor
-      .sign("tx", [lClause])
+      .sign("tx", [method.asClause(allocations)])
       .request();
-
     const setAllocationsTransaction = connex.thor.transaction(
       resSetAllocations.txid
     );
@@ -147,10 +162,6 @@ const DISTRIBUTOR_SETALLOCATIONS_ABI = {
     }
 
     console.log(receipt);
-    // await renounceMastership(transactionReceipt.contractAddress);
-  } catch (error) {
-    console.log("Deployment failed with:", error.message);
-  }
-
-  process.exit(1);
-})();
+    resolve(receipt);
+  });
+};

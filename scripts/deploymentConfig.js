@@ -1,7 +1,4 @@
-require("dotenv").config();
-
-module.exports = {
-  privateKey: process.env.PRIVATE_KEY,
+export default {
   network: {
     mainnet: {
       name: "mainnet",
@@ -12,11 +9,11 @@ module.exports = {
       rpcUrl: "http://testnet02.vechain.fi.blockorder.net",
     },
   },
-  pathToDistributorJson: "../out/Distributor.sol/Distributor.json",
-  pathToFeeCollectorJson: "../out/FeeCollector.sol/FeeCollector.json",
-  pathToIERC20Json: "../out/IERC20.sol/IERC20.json",
+  pathToDistributorJson: "/out/Distributor.sol/Distributor.json",
+  pathToFeeCollectorJson: "/out/FeeCollector.sol/FeeCollector.json",
+  pathToIERC20Json: "/out/IERC20.sol/IERC20.json",
   pathToVexchangeV2FactoryJson:
-    "../out/IVexchangeV2Factory.sol/IVexchangeV2Factory.json",
+    "/out/IVexchangeV2Factory.sol/IVexchangeV2Factory.json",
   addresses: {
     vexAddress: "0x0BD802635eb9cEB3fCBe60470D2857B86841aab6",
     wovAddress: "0x170F4BA8e7ACF6510f55dB26047C83D13498AF8A",

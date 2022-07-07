@@ -1,8 +1,9 @@
 import { Framework } from "@vechain/connex-framework";
 import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-driver";
-import { PRIVATE_KEY, DISTRIBUTOR_ADDRESS } from "./config.js";
+import { DISTRIBUTOR_ADDRESS, PRIVATE_KEY } from "./config.js";
 import { abi } from "thor-devkit";
 import config from "./deploymentConfig.js";
+import readlineSync from "readline-sync";
 import fs from "fs";
 import path from "path";
 const __dirname = path.resolve();
@@ -23,10 +24,20 @@ if (network === undefined) {
   process.exit(1);
 }
 
-// const web3 = thorify(new Web3(), network.rpcUrl);
-// web3.eth.accounts.wallet.add(config.privateKey);
+/* ALLOCATIONS */
+const allocations = [
+  {
+    recipient: config.addresses.feeCollectorVexAddress,
+    weight: 5000,
+  },
+  {
+    recipient: config.addresses.timelockAddress,
+    weight: 5000,
+  },
+];
+/* */
 
-const DISTRIBUTOR_CONSTRUCTOR = {
+const DISTRIBUTOR_CONSTRUCTOR_ABI = {
   inputs: [
     {
       internalType: "contract IERC20",
@@ -36,6 +47,32 @@ const DISTRIBUTOR_CONSTRUCTOR = {
   ],
   stateMutability: "nonpayable",
   type: "constructor",
+};
+
+const DISTRIBUTOR_SETALLOCATIONS_ABI = {
+  inputs: [
+    {
+      components: [
+        {
+          internalType: "address",
+          name: "recipient",
+          type: "address",
+        },
+        {
+          internalType: "uint16",
+          name: "weight",
+          type: "uint16",
+        },
+      ],
+      internalType: "struct Allocation[]",
+      name: "aAllocations",
+      type: "tuple[]",
+    },
+  ],
+  name: "setAllocations",
+  outputs: [],
+  stateMutability: "nonpayable",
+  type: "function",
 };
 
 (async () => {
@@ -55,34 +92,61 @@ const DISTRIBUTOR_CONSTRUCTOR = {
     const lNet = new SimpleNet(network.rpcUrl);
     const lDriver = await Driver.connect(lNet, lWallet);
     const connex = new Framework(lDriver);
-    const coder = new abi.Function(DISTRIBUTOR_CONSTRUCTOR);
+    const coder = new abi.Function(DISTRIBUTOR_CONSTRUCTOR_ABI);
     const data =
       DistributorContract.bytecode.object +
       coder
         .encode(config.addresses.wvetAddress)
         .slice(10 /* remove 0x prefix and 4bytes sig */);
 
-    const { txid } = await connex.vendor
+    const resContractDeployment = await connex.vendor
       .sign("tx", [{ to: null, value: 0, data }])
       .request();
 
-    console.info(`Transaction: ${txid}`);
-
-    const transaction = connex.thor.transaction(txid);
+    const contractDeploymentTransaction = connex.thor.transaction(
+      resContractDeployment.txid
+    );
 
     while (!receipt) {
       await connex.thor.ticker().next();
-      receipt = await transaction.getReceipt();
+      receipt = await contractDeploymentTransaction.getReceipt();
     }
 
     console.log(receipt);
 
     if (receipt.reverted) {
-      console.log("Transaction was reverted");
-    } else {
-      console.log("Transaction was successful");
+      console.log("Failed to deploy contract");
+      process.exit(1);
     }
 
+    const lFeeCollectorContract = connex.thor.account(
+      receipt.outputs[0].contractAddress
+    );
+    const lMethod = lFeeCollectorContract.method(
+      DISTRIBUTOR_SETALLOCATIONS_ABI
+    );
+    const lClause = lMethod.asClause(allocations);
+    console.log(lClause);
+    const resSetAllocations = await connex.vendor
+      .sign("tx", [lClause])
+      .request();
+
+    const setAllocationsTransaction = connex.thor.transaction(
+      resSetAllocations.txid
+    );
+
+    receipt = null;
+    while (!receipt) {
+      await connex.thor.ticker().next();
+      receipt = await setAllocationsTransaction.getReceipt();
+    }
+
+    if (receipt.reverted) {
+      console.log("Failed to call setAllocations method");
+      process.exit(1);
+    }
+
+    console.log(receipt);
     // await renounceMastership(transactionReceipt.contractAddress);
   } catch (error) {
     console.log("Deployment failed with:", error.message);

@@ -14,7 +14,9 @@
     "sellHolding": "node scripts/SellHolding.js",
     "sweepDesired": "node scripts/SweepDesired.js",
     "withdrawTokens": "node scripts/WithdrawTokens.js",
-    "transferTokens": "node scripts/TransferTokens.js"
+    "transferTokens": "node scripts/TransferTokens.js",
+    "deployDistributor": "node scripts/deployDistributor.js",
+    "deployFeeCollector": "node scripts/deployFeeCollector.js"
   },
   "devDependencies": {
     "ethers": "5.5.2",

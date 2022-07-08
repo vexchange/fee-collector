@@ -1,7 +1,7 @@
 import { Framework } from "@vechain/connex-framework";
 import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-driver";
 import axios from "axios";
-import { PRIVATE_KEY, FEE_COLLECTOR_ADDRESS, MAINNET_NODE_URL } from "./config.js";
+import { PRIVATE_KEY, OLD_OLD_FEE_COLLECTOR_ADDRESS, MAINNET_NODE_URL } from "./config.js";
 import { GetERC20Balance } from "./utils.js";
 
 const BREAK_APART_LP_ABI =
@@ -29,12 +29,12 @@ async function BreakApartLP()
     const lDriver = await Driver.connect(lNet, lWallet);
     const lProvider = new Framework(lDriver);
 
-    const lFeeCollectorContract = lProvider.thor.account(FEE_COLLECTOR_ADDRESS);
+    const lFeeCollectorContract = lProvider.thor.account(OLD_FEE_COLLECTOR_ADDRESS);
     const lMethod = lFeeCollectorContract.method(BREAK_APART_LP_ABI);
 
     for (const lPair of lPairs.keys())
     {
-        const lBalance = await GetERC20Balance(lPair, FEE_COLLECTOR_ADDRESS, lProvider);
+        const lBalance = await GetERC20Balance(lPair, OLD_FEE_COLLECTOR_ADDRESS, lProvider);
         if (lBalance.eq(0))
         {
             console.log("Balance for", lPair, "is zero. Skipping breaking apart for this LP");

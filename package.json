@@ -16,8 +16,8 @@
     "sweepDesired": "node scripts/SweepDesired.js",
     "withdrawTokens": "node scripts/WithdrawTokens.js",
     "transferTokens": "node scripts/TransferTokens.js",
-    "deployDistributor": "node scripts/deployDistributor.js",
-    "deployFeeCollector": "node scripts/deployFeeCollector.js"
+    "deployDistributor": "node scripts/deployment/distributor.js",
+    "deployFeeCollector": "node scripts/deployment/feeCollector.js"
   },
   "devDependencies": {
     "ethers": "5.5.2",

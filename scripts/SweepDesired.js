@@ -1,6 +1,6 @@
 import { Framework } from "@vechain/connex-framework";
 import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-driver";
-import { PRIVATE_KEY, FEE_COLLECTOR_ADDRESS, MAINNET_NODE_URL } from "./config.js";
+import { PRIVATE_KEY, OLD_FEE_COLLECTOR_ADDRESS, MAINNET_NODE_URL } from "./config.js";
 import { isAddress } from "ethers/lib/utils.js";
 import { GetERC20Balance } from "./utils.js";
 
@@ -51,14 +51,14 @@ async function SweepDesired(aTokenAddress=undefined)
     const lDriver = await Driver.connect(lNet, lWallet);
     const lProvider = new Framework(lDriver);
 
-    const lFeeCollectorContract = lProvider.thor.account(FEE_COLLECTOR_ADDRESS);
+    const lFeeCollectorContract = lProvider.thor.account(OLD_FEE_COLLECTOR_ADDRESS);
 
     const lMethod = aTokenAddress ? lFeeCollectorContract.method(SWEEP_DESIRED_MANUAL_ABI)
                                   : lFeeCollectorContract.method(SWEEP_DESIRED_ABI);
 
     const lDefaultDesiredToken = (await lFeeCollectorContract.method(MDESIRED_TOKEN_ABI).call()).decoded['0'];
     const lTokenBalance = await GetERC20Balance(aTokenAddress ? aTokenAddress : lDefaultDesiredToken,
-                                FEE_COLLECTOR_ADDRESS,
+                                OLD_FEE_COLLECTOR_ADDRESS,
                                 lProvider);
 
     if (lTokenBalance.eq(0))

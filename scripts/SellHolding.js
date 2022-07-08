@@ -1,7 +1,7 @@
 import { Framework } from "@vechain/connex-framework";
 import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-driver";
 import axios from "axios";
-import { FEE_COLLECTOR_ADDRESS, WVET_ADDRESS, PRIVATE_KEY, MAINNET_NODE_URL } from "./config.js";
+import { OLD_FEE_COLLECTOR_ADDRESS, WVET_ADDRESS, PRIVATE_KEY, MAINNET_NODE_URL } from "./config.js";
 import { GetERC20Balance } from "./utils.js";
 
 const SELL_HOLDING_ABI =
@@ -29,14 +29,14 @@ async function SellHolding()
     const lDriver = await Driver.connect(lNet, lWallet);
     const lProvider = new Framework(lDriver);
 
-    const lFeeCollectorContract = lProvider.thor.account(FEE_COLLECTOR_ADDRESS);
+    const lFeeCollectorContract = lProvider.thor.account(OLD_FEE_COLLECTOR_ADDRESS);
     const lMethod = lFeeCollectorContract.method(SELL_HOLDING_ABI);
 
     for (const lToken of lTokens.keys())
     {
         if (lToken === WVET_ADDRESS) { continue; }
 
-        const lTokenBalance = await GetERC20Balance(lToken, FEE_COLLECTOR_ADDRESS, lProvider);
+        const lTokenBalance = await GetERC20Balance(lToken, OLD_FEE_COLLECTOR_ADDRESS, lProvider);
         const lTokenName = lTokens.get(lToken).name;
         if (lTokenBalance.eq(0))
         {

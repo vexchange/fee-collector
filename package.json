@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "test": "mocha",
     "reinstall": "rm -rf node_modules package-lock.json && npm install",
     "mdlint": "markdownlint . --fix",
     "mdlint:check": "markdownlint .",
@@ -14,7 +15,9 @@
     "sellHolding": "node scripts/SellHolding.js",
     "sweepDesired": "node scripts/SweepDesired.js",
     "withdrawTokens": "node scripts/WithdrawTokens.js",
-    "transferTokens": "node scripts/TransferTokens.js"
+    "transferTokens": "node scripts/TransferTokens.js",
+    "deployDistributor": "node scripts/deployment/distributor.js",
+    "deployFeeCollector": "node scripts/deployment/feeCollector.js"
   },
   "devDependencies": {
     "ethers": "5.5.2",
@@ -24,9 +27,13 @@
   "dependencies": {
     "@vechain/connex": "^2.0.9",
     "axios": "^0.25.0",
+    "chai": "4.3.6",
     "dotenv": "^14.2.0",
+    "inquirer": "9.0.0",
     "markdownlint-cli": "0.30.0",
-    "readline-sync": "^1.4.10"
+    "mocha": "10.0.0",
+    "readline-sync": "1.4.10",
+    "thor-devkit": "2.0.5"
   },
   "type": "module"
 }

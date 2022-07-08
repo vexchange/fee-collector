@@ -1,7 +1,7 @@
 import { Framework } from "@vechain/connex-framework";
 import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-driver";
 import axios from "axios";
-import { PRIVATE_KEY, OLD_OLD_FEE_COLLECTOR_ADDRESS, MAINNET_NODE_URL } from "./config.js";
+import { PRIVATE_KEY, OLD_FEE_COLLECTOR_ADDRESS, MAINNET_NODE_URL } from "./config.js";
 import { GetERC20Balance } from "./utils.js";
 
 const BREAK_APART_LP_ABI =

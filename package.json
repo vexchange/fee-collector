@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "test": "mocha",
     "reinstall": "rm -rf node_modules package-lock.json && npm install",
     "mdlint": "markdownlint . --fix",
     "mdlint:check": "markdownlint .",
@@ -26,8 +27,11 @@
   "dependencies": {
     "@vechain/connex": "^2.0.9",
     "axios": "^0.25.0",
+    "chai": "4.3.6",
     "dotenv": "^14.2.0",
+    "inquirer": "9.0.0",
     "markdownlint-cli": "0.30.0",
+    "mocha": "10.0.0",
     "readline-sync": "1.4.10",
     "thor-devkit": "2.0.5"
   },

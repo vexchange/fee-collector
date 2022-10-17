@@ -1,7 +1,7 @@
 import { Framework } from "@vechain/connex-framework";
 import { Driver, SimpleNet, SimpleWallet } from "@vechain/connex-driver";
 import axios from "axios";
-import { PRIVATE_KEY, MAINNET_NODE_URL, DEPLOYER_ADDRESS, FEE_COLLECTOR_ADDRESS, VEX_ADDRESS, VTHO_ADDRESS } from "./config.js";
+import { PRIVATE_KEY, MAINNET_NODE_URL, DEPLOYER_ADDRESS, OLD_FEE_COLLECTOR_ADDRESS, VEX_ADDRESS, VTHO_ADDRESS } from "./config.js";
 import { GetERC20Balance } from "./utils.js";
 import { BigNumber as BN } from "ethers";
 
@@ -70,7 +70,7 @@ async function Transfer()
             console.log("transferring: ", lBalance.toString());
 
             const lTransferMethod = lTokenContract.method(TRANSFER_ABI);
-            const lTransferClause = lTransferMethod.asClause(FEE_COLLECTOR_ADDRESS, lBalance.toString());
+            const lTransferClause = lTransferMethod.asClause(OLD_FEE_COLLECTOR_ADDRESS, lBalance.toString());
             const lTransferRes = await lProvider.vendor
                         .sign("tx", [lTransferClause])
                         .request();
